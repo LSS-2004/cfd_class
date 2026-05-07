@@ -1,0 +1,66 @@
+name: Feature Request
+description: 提出新功能建议时使用此模板
+labels: ["enhancement"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: "感谢提出功能建议！请详细描述你的想法。"
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: 功能概述
+      description: "简洁描述这个新功能"
+      placeholder: "添加支持湍流模型的k-epsilon求解器..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: 动机与用例
+      description: "为什么需要这个功能？解决什么问题？"
+      placeholder: "当前只能处理层流，但实际工程问题多为湍流..."
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 实现方案建议
+      description: "你认为应该如何实现？（可选）"
+      placeholder: "可以集成OpenFOAM的k-epsilon模型，参考Toro书中第X章..."
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 优先级
+      options:
+        - P0-Must have (核心必备功能)
+        - P1-Should have (重要增强功能)
+        - P2-Nice to have (锦上添花)
+        - P3-Future (未来版本考虑)
+      default: P1-Should have
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: 所属模块
+      options:
+        - core/engine (核心计算引擎)
+        - frontend/ui (前端界面)
+        - animation (动画与可视化)
+        - report (报告与分析)
+        - docs (文档)
+        - infrastructure (基础设施/CI/CD)
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 确认
+      options:
+        - label: 此功能符合项目的教学定位和目标用户需求
+        - label: 我愿意参与或协助此功能的开发/测试/文档工作

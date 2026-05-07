@@ -1,0 +1,104 @@
+name: Bug Report
+description: 发现软件缺陷时使用此模板。请尽可能详细地填写以下信息。
+labels: ["bug", "triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: "感谢报告Bug！请尽可能详细地填写以下信息。"
+
+  - type: input
+    id: version
+    attributes:
+      label: 软件版本
+      description: "出现Bug的版本号（如 v0.1.0-alpha）"
+      placeholder: "v0.1.0-alpha"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: "清晰描述这个Bug是什么"
+      placeholder: "当执行XXX操作时，发生了YYY错误..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: "如何复现这个Bug"
+      placeholder: |
+        1. 进入 '...' 页面
+        2. 设置参数 h_L=1.0, h_R=0.0
+        3. 点击 '开始模拟'
+        4. 观察到错误...
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+      description: "你期望发生什么"
+      placeholder: "应该正确显示溃坝演化的水深剖面..."
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+      description: "实际发生了什么"
+      placeholder: "程序崩溃/结果显示错误/界面卡死..."
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 截图/日志
+      description: "如果有相关截图或终端日志请粘贴"
+      placeholder: "拖拽图片到这里或粘贴日志文本"
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 严重程度
+      options:
+        - P0-Critical (系统崩溃/数据丢失/核心功能完全不可用)
+        - P1-High (主要功能不可用/结果明显错误)
+        - P2-Medium (部分功能异常/UI瑕疵)
+        - P3-Low (小问题/优化建议)
+      default: P2-Medium
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: 问题模块
+      options:
+        - core/engine (核心计算引擎)
+        - frontend/ui (前端界面)
+        - animation (动画功能)
+        - report (报告生成)
+        - docs (文档)
+        - other (其他)
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 运行环境
+      description: "操作系统、Python版本等"
+      placeholder: "Windows 11 / Python 3.10.12 / Streamlit 1.32.0"
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 自查确认
+      options:
+        - label: 我已搜索现有Issues，确认这不是重复问题
+        - label: 我可以在最新代码上稳定复现此Bug
+        - label: 我已阅读CONTRIBUTING.md中的相关规范
