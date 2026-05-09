@@ -202,20 +202,34 @@ def display_time_evolution(h_results: Dict, x: np.ndarray):
         """)
 
 
-def main():
-    """格式对比页面主函数"""
-
-    st.title("🔬 格式对比分析")
+def render_comparison_dashboard():
+    """渲染方案对比仪表板"""
+    st.header("🔬 格式对比分析仪表板")
     st.markdown("对比6种FVM格式的性能和精度表现")
 
+    # 控制栏
+    col1, col2, col3 = st.columns([2, 2, 1])
+    with col1:
+        st.metric("选择格式数", "2-6")
+    with col2:
+        st.metric("对比维度", "4")
+    with col3:
+        if st.button("🔄 刷新对比", type="primary"):
+            st.rerun()
+
+    st.divider()
+
+    # 格式对比总表
     display_scheme_comparison_table()
 
     st.divider()
 
+    # 参数选择
     params = create_parameter_selection()
 
     st.divider()
 
+    # 运行对比实验
     st.subheader("🚀 运行对比实验")
 
     all_schemes = [
@@ -314,6 +328,11 @@ def main():
             4. **效率对比**: Lax-Friedrichs + MacCormack + HLL
                - 评估计算效率
             """)
+
+
+def main():
+    """格式对比页面主函数"""
+    render_comparison_dashboard()
 
 
 if __name__ == "__main__":
