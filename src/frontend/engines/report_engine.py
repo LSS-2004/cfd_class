@@ -235,12 +235,20 @@ class ReportEngine:
             </tr>
 """
             else:
+                l1_val = error_data.get('l1', None)
+                l2_val = error_data.get('l2', None)
+                linf_val = error_data.get('linf', None)
+
+                l1_str = f"{l1_val:.6f}" if l1_val is not None else "N/A"
+                l2_str = f"{l2_val:.6f}" if l2_val is not None else "N/A"
+                linf_str = f"{linf_val:.6f}" if linf_val is not None else "N/A"
+
                 html += f"""
             <tr>
                 <td>{scheme_name}</td>
-                <td>{error_data.get('l1', 'N/A'):.6f}</td>
-                <td>{error_data.get('l2', 'N/A'):.6f}</td>
-                <td>{error_data.get('linf', 'N/A'):.6f}</td>
+                <td>{l1_str}</td>
+                <td>{l2_str}</td>
+                <td>{linf_str}</td>
             </tr>
 """
 

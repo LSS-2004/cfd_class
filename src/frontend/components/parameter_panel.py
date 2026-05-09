@@ -159,7 +159,7 @@ def render_parameter_panel(
             with fig_col1:
                 st.metric("水深比", f"{h_L/h_R:.2f}:1")
             with fig_col2:
-                st.metric("Froude数 (左)", f"{u_L/np.sqrt(9.81*h_L):.3f}")
+                st.metric("Froude数 (左)", f"{u_L/np.sqrt(g*h_L):.3f}")
 
     # 时间参数
     with st.sidebar.expander("⏱️ 时间参数", expanded=True):
@@ -262,7 +262,7 @@ def validate_params(params: Dict[str, Any]) -> Dict[str, Any]:
     if params["nx"] > 1000:
         warnings.append("网格数较多，计算时间可能较长")
 
-    if abs(params["u_L"]) > 5 * np.sqrt(params["g"] * params["h_L"]):
+    if params.get("h_L", 0) > 0 and abs(params.get("u_L", 0)) > 5 * np.sqrt(params.get("g", 9.81) * params["h_L"]):
         warnings.append("左侧流速过大，可能超出浅水方程适用范围")
 
     return {

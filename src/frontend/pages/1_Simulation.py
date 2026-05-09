@@ -303,8 +303,14 @@ def display_results(results: Dict):
             x = config.x
 
             for scheme_name, result in schemes_results.items():
+                if not result:
+                    continue
                 final_t = max(result.keys())
-                h = result[final_t][0, :]
+                final_result = result[final_t]
+                if final_result.ndim < 2 or final_result.shape[0] < 1:
+                    st.warning(f"⚠️ {scheme_name} 结果格式异常")
+                    continue
+                h = final_result[0, :]
 
                 ax.plot(x, h, label=scheme_name, linewidth=2)
 
@@ -339,8 +345,18 @@ def display_results(results: Dict):
             }
 
             for scheme_name, result in schemes_results.items():
-                numerical = result[max(result.keys())][0, :]
+                if not result:
+                    continue
+                final_t = max(result.keys())
+                final_result = result[final_t]
+                if final_result.ndim < 2 or final_result.shape[0] < 1:
+                    continue
+                numerical = final_result[0, :]
                 exact = exact_solution[0, :]
+
+                if len(numerical) != len(exact):
+                    st.warning(f"⚠️ {scheme_name} 结果长度不匹配")
+                    continue
 
                 l1 = np.sum(np.abs(numerical - exact)) / len(exact) * config.dx
                 l2 = np.sqrt(np.sum((numerical - exact) ** 2) / len(exact)) * config.dx

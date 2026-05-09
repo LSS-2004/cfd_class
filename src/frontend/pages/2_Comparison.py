@@ -91,8 +91,12 @@ def plot_scheme_comparison(results: Dict):
         for idx, (scheme_name, h_data) in enumerate(results["h_results"].items()):
             color = colors[idx]
 
-            axes[0, 0].plot(x, h_data[-1], label=scheme_name, color=color, linewidth=2)
-            axes[0, 1].plot(x, h_data[-1], label=scheme_name, color=color, linewidth=2)
+            if len(h_data) == 0:
+                continue
+            final_h = h_data[-1] if hasattr(h_data, '__len__') and len(h_data) > 0 else h_data
+
+            axes[0, 0].plot(x, final_h, label=scheme_name, color=color, linewidth=2)
+            axes[0, 1].plot(x, final_h, label=scheme_name, color=color, linewidth=2)
 
         axes[0, 0].set_xlabel("Position x (m)")
         axes[0, 0].set_ylabel("Water Depth h (m)")

@@ -75,15 +75,25 @@ class SimulationEngine:
                 try:
                     scheme = get_scheme(scheme_name)
                     result = scheme.evolve(self.config)
+
+                    if not result:
+                        results["errors"][scheme_name] = {"error": "模拟结果为空"}
+                        continue
+
                     results["schemes"][scheme_name] = result
 
                     # 计算误差
                     if results["exact"] is not None:
-                        errors = self._compute_errors(
-                            result[max(result.keys())][0, :],
-                            results["exact"][0, :]
-                        )
-                        results["errors"][scheme_name] = errors
+                        final_t = max(result.keys())
+                        final_result = result[final_t]
+                        if final_result.ndim >= 2 and final_result.shape[0] >= 1:
+                            errors = self._compute_errors(
+                                final_result[0, :],
+                                results["exact"][0, :]
+                            )
+                            results["errors"][scheme_name] = errors
+                        else:
+                            results["errors"][scheme_name] = {"error": "结果格式异常"}
 
                 except Exception as e:
                     results["errors"][scheme_name] = {"error": str(e)}

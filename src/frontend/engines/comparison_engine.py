@@ -69,6 +69,10 @@ class ComparisonEngine:
                     end_time = time.time()
                     computation_time = (end_time - start_time) * 1000  # ms
 
+                    if not result:
+                        results["errors"][scheme_name] = {"error": "模拟结果为空"}
+                        continue
+
                     results["schemes"][scheme_name] = result
                     results["performance"][scheme_name] = {
                         "time_ms": computation_time,
@@ -77,11 +81,16 @@ class ComparisonEngine:
 
                     # 计算误差
                     if results["exact"] is not None:
-                        numerical = result[max(result.keys())][0, :]
-                        exact = results["exact"][0, :]
+                        final_t = max(result.keys())
+                        final_result = result[final_t]
+                        if final_result.ndim >= 2 and final_result.shape[0] >= 1:
+                            numerical = final_result[0, :]
+                            exact = results["exact"][0, :]
 
-                        errors = self._compute_errors(numerical, exact)
-                        results["errors"][scheme_name] = errors
+                            errors = self._compute_errors(numerical, exact)
+                            results["errors"][scheme_name] = errors
+                        else:
+                            results["errors"][scheme_name] = {"error": "结果格式异常"}
 
                 except Exception as e:
                     results["errors"][scheme_name] = {"error": str(e)}
