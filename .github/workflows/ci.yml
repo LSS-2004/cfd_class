@@ -1,10 +1,10 @@
-name: CI Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [develop, main]
+    branches: [ main, develop ]
   pull_request:
-    branches: [develop, main]
+    branches: [ main, develop ]
 
 env:
   PYTHON_VERSION: "3.10"
@@ -106,10 +106,45 @@ else:
       - name: Bandit security linter
         run: bandit -r src/ -ll || true
 
+  frontend-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install streamlit
+
+    - name: Test Streamlit app imports
+      run: |
+        python -c "from src.frontend.app import main; print('✅ Main app imports successfully')"
+        python -c "from src.frontend.pages import *; print('✅ Pages module imports successfully')"
+
+    - name: Validate Streamlit pages
+      run: |
+        python -c "
+        import streamlit as st
+        from pathlib import Path
+        pages_dir = Path('src/frontend/pages')
+        assert pages_dir.exists(), 'Pages directory not found'
+        assert (pages_dir / '1_Simulation.py').exists(), 'Simulation page not found'
+        assert (pages_dir / '2_Comparison.py').exists(), 'Comparison page not found'
+        assert (pages_dir / '3_Theory.py').exists(), 'Theory page not found'
+        print('✅ All Streamlit pages validated')
+        "
+
   build:
     name: Build Verification
     runs-on: ${{ matrix.os }}
-    needs: [test, security]
+    needs: [test, security, frontend-test]
     if: github.event_name == 'pull_request'
 
     strategy:
@@ -138,3 +173,32 @@ else:
         with:
           name: dist-${{ matrix.os }}
           path: dist/
+
+  deploy-docs:
+    needs: [test, lint]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install documentation dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install sphinx sphinx-rtd-theme
+
+    - name: Build documentation
+      run: |
+        cd docs
+        make html
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs/_build/html

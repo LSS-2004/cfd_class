@@ -1,12 +1,22 @@
-# Frontend package
 """
-Streamlit前端界面模块
+CFD-Class Frontend Module
 
-包含：
-- app: 主入口（导航栏+首页）
-- pages: 多页面组件（首页/模拟/动画/报告）
-- components: 可复用UI组件
-- engines: 业务逻辑引擎
+一维溃坝CFD教学软件前端模块
+
+提供Streamlit多页面Web应用
+
+主入口: app.py
+页面模块: pages/
+组件模块: components/
+业务引擎: engines/
 """
 
-__all__ = []
+__version__ = "0.1.0-alpha"
+__author__ = "CFD-Team"
+__description__ = "CFD-Class Frontend - 一维溃坝CFD教学软件前端"
+
+__all__ = [
+    "__version__",
+    "__author__",
+    "__description__",
+]
