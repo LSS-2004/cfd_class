@@ -250,7 +250,19 @@ def run_simulation(params: Dict[str, Any], schemes: list) -> Optional[Dict]:
             from src.core.config import DamBreakConfig
             from src.core.schemes import get_scheme
 
-            config = DamBreakConfig(**params)
+            config = DamBreakConfig(
+                    domain_length=params["domain_length"],
+                    nx=params["nx"],
+                    x_dam=params["x_dam"],
+                    h_l=params["h_l"],
+                    h_r=params["h_r"],
+                    u_l=params["u_l"],
+                    u_r=params["u_r"],
+                    g=params["g"],
+                    t_end=params["t_end"],
+                    cfl=params["cfl"],
+                    boundary_type=params.get("boundary_type", "transmissive")
+                )
 
             results = {}
             for idx, scheme_name in enumerate(schemes):
