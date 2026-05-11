@@ -27,7 +27,6 @@ def main():
     with st.sidebar.expander("📐 域参数", expanded=True):
         domain_length = st.number_input("计算域长度 [m]", 100.0, 5000.0, 1000.0, 100.0)
         nx = st.number_input("网格数量", 10, 5000, 100, 10)
-        x_dam = st.slider("大坝位置 [m]", 0.0, domain_length, domain_length / 2, 10.0)
 
     with st.sidebar.expander("🌊 初始条件", expanded=True):
         col1, col2 = st.columns(2)
@@ -65,7 +64,6 @@ def main():
     params = {
         "domain_length": domain_length,
         "nx": nx,
-        "x_dam": x_dam,
         "h_l": h_l,
         "h_r": h_r,
         "u_l": u_l,
@@ -107,8 +105,10 @@ def main():
                     display_results(x, results, params)
 
                 except ImportError as e:
-                    st.error(f"❌ 核心模块未实现: {e}")
-                    st.info("💡 请先完成后端开发")
+                    st.error(f"❌ 核心模块导入失败: {e}")
+                    st.info("💡 请检查Python路径配置")
+                except Exception as e:
+                    st.error(f"❌ 模拟运行失败: {e}")
 
     else:
         st.info("👈 配置参数后点击「开始模拟」")
@@ -152,7 +152,9 @@ def display_results(x: np.ndarray, results: Dict, params: Dict[str, Any]):
                 final_t = max(result.keys())
                 final_result = result[final_t]
                 if final_result.ndim >= 2 and final_result.shape[0] >= 2:
-                    u = final_result[1, :] / final_result[0, :]
+                    h = final_result[0, :]
+                    hu = final_result[1, :]
+                    u = hu / np.where(h > 0, h, 1)
                     ax.plot(x, u, label=scheme_name, linewidth=2)
 
         ax.set_xlabel("Position x (m)")

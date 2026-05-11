@@ -1,4 +1,3 @@
-# Analysis tools package
 """
 分析工具包
 
@@ -7,4 +6,18 @@
 - 收敛阶估计
 """
 
-__all__ = []
+from src.core.analysis.error_analysis import (
+    compute_l1_error,
+    compute_l2_error,
+    compute_linf_error,
+    estimate_convergence_order,
+    compute_mass_conservation
+)
+
+__all__ = [
+    "compute_l1_error",
+    "compute_l2_error",
+    "compute_linf_error",
+    "estimate_convergence_order",
+    "compute_mass_conservation"
+]
