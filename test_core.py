@@ -12,18 +12,19 @@ from src.core.schemes import get_scheme, get_all_schemes
 def test_config():
     """测试配置类"""
     print('1. 测试配置类 DamBreakConfig')
-    config = DamBreakConfig(nx=100, domain_length=100.0, h_l=10.0, h_r=1.0, t_end=1.0)
+    config = DamBreakConfig(nx=100, domain_length=100.0, x_dam=50.0, h_l=10.0, h_r=1.0, t_end=1.0)
     print('   网格数量: %d' % config.nx)
     print('   网格间距: %.4f' % config.dx)
     print('   大坝位置: %.4f' % config.x_dam)
-    print('   初始状态形状: %s' % str(config.q_initial.shape))
+    h, u = config.initial_condition()
+    print('   初始状态形状: h=%s, u=%s' % (str(h.shape), str(u.shape)))
     print('   OK 配置类正常')
 
 
 def test_schemes():
     """测试所有数值格式"""
     print('2. 测试数值格式')
-    config = DamBreakConfig(nx=100, domain_length=100.0, h_l=10.0, h_r=1.0, t_end=1.0)
+    config = DamBreakConfig(nx=100, domain_length=100.0, x_dam=50.0, h_l=10.0, h_r=1.0, t_end=1.0)
     
     schemes = get_all_schemes()
     for scheme_name in schemes:

@@ -203,11 +203,11 @@ class SimulationEngine:
             return {}
 
         return {
-            "domain_length": self.config.L,
+            "domain_length": self.config.domain_length,
             "grid_points": self.config.nx,
             "dam_position": self.config.x_dam,
-            "left_depth": self.config.h_L,
-            "right_depth": self.config.h_R,
+            "left_depth": self.config.h_l,
+            "right_depth": self.config.h_r,
             "gravity": self.config.g,
             "end_time": self.config.t_end,
             "cfl": self.config.cfl,
