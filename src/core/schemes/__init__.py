@@ -8,6 +8,8 @@ Supported schemes:
 - MacCormack: NASA predictor-corrector
 - Beam-Warming: One-sided backward difference
 - Fromm: Averaged scheme
+- Godunov: Exact Riemann solver
+- MUSCL-Hancock: TVD high-resolution
 """
 
 from src.core.schemes.base_scheme import BaseScheme, SimulationResult
@@ -17,6 +19,8 @@ from src.core.schemes.lax_wendroff import LaxWendroffScheme
 from src.core.schemes.maccormack import MacCormackScheme
 from src.core.schemes.beam_warming import BeamWarmingScheme
 from src.core.schemes.fromm import FrommScheme
+from src.core.schemes.godunov import GodunovScheme
+from src.core.schemes.muscl import MUSCLScheme
 
 __all__ = [
     "BaseScheme",
@@ -27,4 +31,6 @@ __all__ = [
     "MacCormackScheme",
     "BeamWarmingScheme",
     "FrommScheme",
+    "GodunovScheme",
+    "MUSCLScheme",
 ]

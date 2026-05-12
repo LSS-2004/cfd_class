@@ -9,6 +9,8 @@ from src.core.schemes.lax_wendroff import LaxWendroffScheme
 from src.core.schemes.maccormack import MacCormackScheme
 from src.core.schemes.beam_warming import BeamWarmingScheme
 from src.core.schemes.fromm import FrommScheme
+from src.core.schemes.godunov import GodunovScheme
+from src.core.schemes.muscl import MUSCLScheme
 
 
 class TestUpwindScheme:
@@ -151,6 +153,57 @@ class TestFrommScheme:
         assert np.all(h_new > 0)
 
 
+class TestGodunovScheme:
+    """Test suite for GodunovScheme."""
+
+    def test_init(self):
+        """Test scheme initialization."""
+        scheme = GodunovScheme()
+        assert scheme.name == "Godunov"
+        assert scheme.order == 1
+
+    def test_advance(self):
+        """Test single time step advancement."""
+        scheme = GodunovScheme()
+        h = np.ones(10)
+        h[:5] = 2.0
+        u = np.zeros(10)
+        h_new, u_new = scheme.advance(h, u, 0.01, 0.1)
+        assert len(h_new) == 10
+        assert np.all(h_new > 0)
+
+
+class TestMUSCLScheme:
+    """Test suite for MUSCLScheme."""
+
+    def test_init(self):
+        """Test scheme initialization."""
+        scheme = MUSCLScheme()
+        assert scheme.name == "MUSCL-Hancock"
+        assert scheme.order == 2
+
+    def test_advance(self):
+        """Test single time step advancement."""
+        scheme = MUSCLScheme()
+        h = np.ones(10)
+        h[:5] = 2.0
+        u = np.zeros(10)
+        h_new, u_new = scheme.advance(h, u, 0.01, 0.1)
+        assert len(h_new) == 10
+        assert np.all(h_new > 0)
+
+    def test_limiters(self):
+        """Test different slope limiters."""
+        for limiter in ["minmod", "superbee", "vanleer"]:
+            scheme = MUSCLScheme(limiter=limiter)
+            h = np.ones(10)
+            h[:5] = 2.0
+            u = np.zeros(10)
+            h_new, u_new = scheme.advance(h, u, 0.01, 0.1)
+            assert len(h_new) == 10
+            assert np.all(h_new > 0)
+
+
 class TestAllSchemes:
     """Tests applicable to all schemes."""
 
@@ -164,6 +217,8 @@ class TestAllSchemes:
             MacCormackScheme(),
             BeamWarmingScheme(),
             FrommScheme(),
+            GodunovScheme(),
+            MUSCLScheme(),
         ]
 
     def test_mass_conservation(self, schemes):
