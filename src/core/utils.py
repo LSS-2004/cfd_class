@@ -95,7 +95,6 @@ def apply_boundary_conditions(q: np.ndarray, boundary_type: str) -> np.ndarray:
     Returns:
         应用边界条件后的状态向量
     """
-    nx = q.shape[1]
 
     if boundary_type == "transmissive":
         # 透射边界（外推）

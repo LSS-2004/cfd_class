@@ -8,7 +8,6 @@ import numpy as np
 
 from src.core.schemes.base_scheme import BaseScheme
 from src.core.solvers.riemann_solver import godunov_flux
-from src.core.utils import flux
 
 
 class MUSCLScheme(BaseScheme):

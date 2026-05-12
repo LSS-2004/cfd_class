@@ -4,7 +4,7 @@
 定义溃坝问题的配置参数和初始化状态
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Callable, Optional
 
 import numpy as np

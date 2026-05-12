@@ -10,6 +10,8 @@ from typing import Any, Callable, Dict, List, Optional
 import numpy as np
 import streamlit as st
 
+g = 9.81
+
 # 预设参数配置 - 基于 B1 DamBreakConfig 规范
 PRESETS = {
     "标准溃坝 (B1默认)": {

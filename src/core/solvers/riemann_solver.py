@@ -239,7 +239,7 @@ def godunov_flux(
 
 
 def evaluate_riemann_solution(
-    sol: Dict, x: np.ndarray, t: float
+    sol: Dict, x: np.ndarray, t: float, g: float = 9.81
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     在给定位置和时间评估Riemann解
