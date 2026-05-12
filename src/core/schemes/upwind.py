@@ -1,7 +1,7 @@
-"""MacCormack scheme implementation.
+"""First-order upwind (Rusanov) scheme implementation.
 
-A second-order predictor-corrector scheme developed by Robert MacCormack
-at NASA Ames (1969). Used in Space Shuttle simulations.
+A robust first-order scheme using Rusanov-type numerical flux.
+Very diffusive but unconditionally stable for CFL <= 1.
 """
 
 import numpy as np
@@ -10,35 +10,30 @@ from numpy.typing import NDArray
 from src.core.schemes.base_scheme import BaseScheme
 
 
-class MacCormackScheme(BaseScheme):
-    """MacCormack predictor-corrector scheme.
+class UpwindScheme(BaseScheme):
+    """First-order upwind scheme.
 
-    Two-step method:
-    1. Predictor: Forward difference
-    2. Corrector: Backward difference
-
+    Uses the maximum wave speed to compute numerical diffusion.
     Characteristics:
-        - Order: 2nd order O(dx^2)
-        - Predictor-corrector structure
-        - Historical significance (NASA Space Shuttle)
+        - Order: 1st order O(dx)
+        - Very robust but highly diffusive
+        - CFL <= 1.0
     """
 
     def __init__(self, g: float = 9.81):
-        """Initialize MacCormack scheme.
+        """Initialize upwind scheme.
 
         Args:
             g: Gravitational acceleration [m/s^2]
         """
-        super().__init__("MacCormack", 2, g)
+        super().__init__("First-Order Upwind", 1, g)
 
     def compute_flux(
         self,
         h: NDArray[np.float64],
         u: NDArray[np.float64],
     ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
-        """Compute MacCormack numerical flux.
-
-        Uses forward-backward differencing for second-order accuracy.
+        """Compute Rusanov numerical flux.
 
         Args:
             h: Water depth array [m]
@@ -72,16 +67,15 @@ class MacCormackScheme(BaseScheme):
                 dtype=np.float64,
             )
 
-            # Conservative variables
-            u_l_vec = np.array([h_l, h_l * u_l], dtype=np.float64)
-            u_r_vec = np.array([h_r, h_r * u_r], dtype=np.float64)
-
-            # Maximum wave speed for stabilization
+            # Maximum wave speed (Rusanov)
             c_l = np.sqrt(self.g * h_l) if h_l > 0 else 0.0
             c_r = np.sqrt(self.g * h_r) if h_r > 0 else 0.0
             s_max = max(abs(u_l) + c_l, abs(u_r) + c_r)
 
-            # MacCormack flux (centered with dissipation)
+            # Rusanov flux (local Lax-Friedrichs)
+            u_l_vec = np.array([h_l, h_l * u_l], dtype=np.float64)
+            u_r_vec = np.array([h_r, h_r * u_r], dtype=np.float64)
+
             flux = 0.5 * (f_l + f_r) - 0.5 * s_max * (u_r_vec - u_l_vec)
 
             mass_flux[i] = flux[0]
