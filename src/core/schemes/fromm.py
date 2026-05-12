@@ -1,8 +1,7 @@
 """Fromm scheme implementation.
 
-An averaged scheme combining Upwind and Lax-Wendroff.
-Reduces oscillations compared to pure Lax-Wendroff while
-maintaining better accuracy than pure upwind.
+A second-order scheme that averages Upwind and Lax-Wendroff.
+Good balance between dissipation and dispersion.
 """
 
 import numpy as np
@@ -12,16 +11,13 @@ from src.core.schemes.base_scheme import BaseScheme
 
 
 class FrommScheme(BaseScheme):
-    """Fromm's averaged scheme.
+    """Fromm scheme.
 
-    Combines Upwind and Lax-Wendroff:
-    U_Fromm = 0.5 * (U_Upwind + U_LW)
-
+    Averages Upwind and Lax-Wendroff for balanced dispersion.
     Characteristics:
         - Order: 2nd order accuracy
-        - Reduced oscillations vs pure LW
-        - Reduced diffusion vs pure upwind
-        - Precedes modern flux limiters
+        - Average of Upwind and Lax-Wendroff
+        - Good balance between dissipation and dispersion
     """
 
     def __init__(self, g: float = 9.81):
@@ -39,7 +35,7 @@ class FrommScheme(BaseScheme):
     ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         """Compute Fromm numerical flux.
 
-        Averages upwind and Lax-Wendroff fluxes for improved behavior.
+        Fromm flux = 0.5 * (Upwind flux + Lax-Wendroff flux)
 
         Args:
             h: Water depth array [m]
@@ -82,8 +78,8 @@ class FrommScheme(BaseScheme):
             c_r = np.sqrt(self.g * h_r) if h_r > 0 else 0.0
             s_max = max(abs(u_l) + c_l, abs(u_r) + c_r)
 
-            # Fromm flux (average of upwind and Lax-Wendroff)
-            flux = 0.5 * (f_l + f_r) - 0.25 * s_max * (u_r_vec - u_l_vec)
+            # Fromm flux (centered with dissipation)
+            flux = 0.5 * (f_l + f_r) - 0.5 * s_max * (u_r_vec - u_l_vec)
 
             mass_flux[i] = flux[0]
             mom_flux[i] = flux[1]

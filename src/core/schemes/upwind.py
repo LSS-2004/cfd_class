@@ -67,12 +67,12 @@ class UpwindScheme(BaseScheme):
                 dtype=np.float64,
             )
 
-            # Maximum wave speed
+            # Maximum wave speed (Rusanov)
             c_l = np.sqrt(self.g * h_l) if h_l > 0 else 0.0
             c_r = np.sqrt(self.g * h_r) if h_r > 0 else 0.0
             s_max = max(abs(u_l) + c_l, abs(u_r) + c_r)
 
-            # Rusanov flux
+            # Rusanov flux (local Lax-Friedrichs)
             u_l_vec = np.array([h_l, h_l * u_l], dtype=np.float64)
             u_r_vec = np.array([h_r, h_r * u_r], dtype=np.float64)
 
