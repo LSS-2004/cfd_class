@@ -4,15 +4,12 @@
 提供交互式溃坝模拟运行功能
 """
 
-import streamlit as st
-import numpy as np
-from typing import Dict, Any
+from typing import Any, Dict
 
-st.set_page_config(
-    page_title="模拟运行 | CFD-Class",
-    page_icon="📊",
-    layout="wide"
-)
+import numpy as np
+import streamlit as st
+
+st.set_page_config(page_title="模拟运行 | CFD-Class", page_icon="📊", layout="wide")
 
 
 def main():
@@ -43,7 +40,9 @@ def main():
         cfl = st.number_input("CFL", 0.01, 1.0, 0.9, 0.05)
 
     with st.sidebar.expander("🔒 边界条件", expanded=False):
-        boundary_type = st.selectbox("边界条件类型", ["transmissive", "reflective", "periodic"])
+        boundary_type = st.selectbox(
+            "边界条件类型", ["transmissive", "reflective", "periodic"]
+        )
 
     # 方案选择
     st.sidebar.divider()
@@ -54,9 +53,11 @@ def main():
         "MacCormack",
         "Godunov",
         "HLL",
-        "MUSCL-Hancock"
+        "MUSCL-Hancock",
     ]
-    selected_schemes = st.sidebar.multiselect("选择计算方案", available_schemes, default=["Lax-Friedrichs"])
+    selected_schemes = st.sidebar.multiselect(
+        "选择计算方案", available_schemes, default=["Lax-Friedrichs"]
+    )
 
     # 主内容区
     st.header("🚀 运行模拟")
@@ -72,7 +73,7 @@ def main():
         "t_end": t_end,
         "cfl": cfl,
         "boundary_type": boundary_type,
-        "schemes": selected_schemes
+        "schemes": selected_schemes,
     }
 
     # 参数摘要

@@ -4,12 +4,13 @@
 提供绑图渲染、动画和交互功能
 """
 
-import streamlit as st
-import numpy as np
-from typing import Dict, List, Optional, Tuple
-from numpy.typing import NDArray
-import io
 import base64
+import io
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
+import streamlit as st
+from numpy.typing import NDArray
 
 
 def render_plot(
@@ -21,7 +22,7 @@ def render_plot(
     figsize: Tuple[int, int] = (10, 6),
     show_grid: bool = True,
     show_legend: bool = True,
-    fill_between: Optional[Dict[str, Tuple[float, float]]] = None
+    fill_between: Optional[Dict[str, Tuple[float, float]]] = None,
 ) -> None:
     """渲染绑图
 
@@ -55,13 +56,13 @@ def render_plot(
         ax.set_ylabel(ylabel, fontsize=12)
 
         if title:
-            ax.set_title(title, fontsize=14, fontweight='bold')
+            ax.set_title(title, fontsize=14, fontweight="bold")
 
         if show_grid:
-            ax.grid(True, alpha=0.3, linestyle='--')
+            ax.grid(True, alpha=0.3, linestyle="--")
 
         if show_legend:
-            ax.legend(loc='best', fontsize=10)
+            ax.legend(loc="best", fontsize=10)
 
         plt.tight_layout()
         st.pyplot(fig)
@@ -76,7 +77,7 @@ def render_height_profile(
     h: NDArray[np.float64],
     exact: Optional[NDArray[np.float64]] = None,
     title: str = "水深分布",
-    fill: bool = True
+    fill: bool = True,
 ) -> None:
     """渲染水深剖面图
 
@@ -94,23 +95,23 @@ def render_height_profile(
 
         # 填充水下区域
         if fill:
-            ax.fill_between(x, 0, h, alpha=0.3, color='blue', label='Numerical')
+            ax.fill_between(x, 0, h, alpha=0.3, color="blue", label="Numerical")
 
-        ax.plot(x, h, 'b-', linewidth=2, label='Numerical')
+        ax.plot(x, h, "b-", linewidth=2, label="Numerical")
 
         if exact is not None:
-            ax.plot(x, exact, 'k--', linewidth=2, label='Exact')
+            ax.plot(x, exact, "k--", linewidth=2, label="Exact")
             if fill:
-                ax.fill_between(x, 0, exact, alpha=0.1, color='gray')
+                ax.fill_between(x, 0, exact, alpha=0.1, color="gray")
 
         ax.set_xlabel("Position x (m)", fontsize=12)
         ax.set_ylabel("Water Depth h (m)", fontsize=12)
-        ax.set_title(title, fontsize=14, fontweight='bold')
-        ax.grid(True, alpha=0.3, linestyle='--')
-        ax.legend(loc='best', fontsize=10)
+        ax.set_title(title, fontsize=14, fontweight="bold")
+        ax.grid(True, alpha=0.3, linestyle="--")
+        ax.legend(loc="best", fontsize=10)
 
         # 添加水平参考线
-        ax.axhline(y=0, color='k', linewidth=0.5)
+        ax.axhline(y=0, color="k", linewidth=0.5)
 
         plt.tight_layout()
         st.pyplot(fig)
@@ -123,7 +124,7 @@ def render_velocity_profile(
     x: NDArray[np.float64],
     u: NDArray[np.float64],
     exact: Optional[NDArray[np.float64]] = None,
-    title: str = "速度分布"
+    title: str = "速度分布",
 ) -> None:
     """渲染速度剖面图
 
@@ -138,19 +139,19 @@ def render_velocity_profile(
 
         fig, ax = plt.subplots(figsize=(10, 6))
 
-        ax.plot(x, u, 'r-', linewidth=2, label='Numerical')
+        ax.plot(x, u, "r-", linewidth=2, label="Numerical")
 
         if exact is not None:
-            ax.plot(x, exact, 'k--', linewidth=2, label='Exact')
+            ax.plot(x, exact, "k--", linewidth=2, label="Exact")
 
         ax.set_xlabel("Position x (m)", fontsize=12)
         ax.set_ylabel("Velocity u (m/s)", fontsize=12)
-        ax.set_title(title, fontsize=14, fontweight='bold')
-        ax.grid(True, alpha=0.3, linestyle='--')
-        ax.legend(loc='best', fontsize=10)
+        ax.set_title(title, fontsize=14, fontweight="bold")
+        ax.grid(True, alpha=0.3, linestyle="--")
+        ax.legend(loc="best", fontsize=10)
 
         # 添加零速度参考线
-        ax.axhline(y=0, color='k', linewidth=0.5, linestyle='--')
+        ax.axhline(y=0, color="k", linewidth=0.5, linestyle="--")
 
         plt.tight_layout()
         st.pyplot(fig)
@@ -163,7 +164,7 @@ def render_comparison_plot(
     x: NDArray[np.float64],
     results: Dict[str, Dict[float, NDArray[np.float64]]],
     config: Dict,
-    exact_solution: Optional[NDArray[np.float64]] = None
+    exact_solution: Optional[NDArray[np.float64]] = None,
 ) -> None:
     """渲染对比绑图
 
@@ -187,7 +188,7 @@ def render_comparison_plot(
             axes[0, 0].plot(x, h, label=scheme_name, color=colors[idx], linewidth=2)
 
         if exact_solution is not None:
-            axes[0, 0].plot(x, exact_solution[0, :], 'k--', label='Exact', linewidth=2)
+            axes[0, 0].plot(x, exact_solution[0, :], "k--", label="Exact", linewidth=2)
 
         axes[0, 0].set_xlabel("Position x (m)")
         axes[0, 0].set_ylabel("Water Depth h (m)")
@@ -203,7 +204,7 @@ def render_comparison_plot(
 
         if exact_solution is not None:
             u_exact = exact_solution[1, :] / exact_solution[0, :]
-            axes[0, 1].plot(x, u_exact, 'k--', label='Exact', linewidth=2)
+            axes[0, 1].plot(x, u_exact, "k--", label="Exact", linewidth=2)
 
         axes[0, 1].set_xlabel("Position x (m)")
         axes[0, 1].set_ylabel("Velocity u (m/s)")
@@ -217,11 +218,19 @@ def render_comparison_plot(
             for scheme_name, result in results.items():
                 numerical = result[max(result.keys())][0, :]
                 exact = exact_solution[0, :]
-                l1 = np.sum(np.abs(numerical - exact)) / len(exact) * config.get("dx", 1.0)
+                l1 = (
+                    np.sum(np.abs(numerical - exact))
+                    / len(exact)
+                    * config.get("dx", 1.0)
+                )
                 errors[scheme_name] = l1
 
-            axes[1, 0].bar(range(len(errors)), list(errors.values()),
-                          color=colors[:len(errors)], alpha=0.7)
+            axes[1, 0].bar(
+                range(len(errors)),
+                list(errors.values()),
+                color=colors[: len(errors)],
+                alpha=0.7,
+            )
             axes[1, 0].set_xticks(range(len(errors)))
             axes[1, 0].set_xticklabels(list(errors.keys()), rotation=45, ha="right")
             axes[1, 0].set_ylabel("L1 Error")
@@ -229,9 +238,16 @@ def render_comparison_plot(
             axes[1, 0].grid(True, alpha=0.3, axis="y")
 
         # 收敛性分析
-        axes[1, 1].text(0.5, 0.5, "收敛性分析\n(需要多网格计算)",
-                       ha="center", va="center", transform=axes[1, 1].transAxes,
-                       fontsize=14, bbox=dict(boxstyle="round", facecolor="wheat"))
+        axes[1, 1].text(
+            0.5,
+            0.5,
+            "收敛性分析\n(需要多网格计算)",
+            ha="center",
+            va="center",
+            transform=axes[1, 1].transAxes,
+            fontsize=14,
+            bbox=dict(boxstyle="round", facecolor="wheat"),
+        )
         axes[1, 1].set_title("收敛性分析")
         axes[1, 1].axis("off")
 
@@ -247,7 +263,7 @@ def render_animation(
     time_steps: List[float],
     results: Dict[float, NDArray[np.float64]],
     scheme_name: str,
-    exact_results: Optional[Dict[float, NDArray[np.float64]]] = None
+    exact_results: Optional[Dict[float, NDArray[np.float64]]] = None,
 ) -> None:
     """渲染时间演化动画（使用 Streamlit slider）
 
@@ -270,7 +286,7 @@ def render_animation(
             max_value=max(time_steps),
             value=0.0,
             step=time_steps[1] - time_steps[0] if len(time_steps) > 1 else 0.1,
-            help="拖动滑块查看不同时刻的解"
+            help="拖动滑块查看不同时刻的解",
         )
 
         # 找到最接近的时间步
@@ -282,13 +298,13 @@ def render_animation(
             # 水深
             fig, ax = plt.subplots(figsize=(8, 5))
             h = results[closest_time][0, :]
-            ax.fill_between(x, 0, h, alpha=0.3, color='blue')
-            ax.plot(x, h, 'b-', linewidth=2, label='Numerical')
+            ax.fill_between(x, 0, h, alpha=0.3, color="blue")
+            ax.plot(x, h, "b-", linewidth=2, label="Numerical")
 
             if exact_results and closest_time in exact_results:
                 h_exact = exact_results[closest_time][0, :]
-                ax.plot(x, h_exact, 'k--', linewidth=2, label='Exact')
-                ax.fill_between(x, 0, h_exact, alpha=0.1, color='gray')
+                ax.plot(x, h_exact, "k--", linewidth=2, label="Exact")
+                ax.fill_between(x, 0, h_exact, alpha=0.1, color="gray")
 
             ax.set_xlabel("Position x (m)")
             ax.set_ylabel("Water Depth h (m)")
@@ -301,11 +317,14 @@ def render_animation(
             # 速度
             fig, ax = plt.subplots(figsize=(8, 5))
             u = results[closest_time][1, :] / results[closest_time][0, :]
-            ax.plot(x, u, 'r-', linewidth=2, label='Numerical')
+            ax.plot(x, u, "r-", linewidth=2, label="Numerical")
 
             if exact_results and closest_time in exact_results:
-                u_exact = exact_results[closest_time][1, :] / exact_results[closest_time][0, :]
-                ax.plot(x, u_exact, 'k--', linewidth=2, label='Exact')
+                u_exact = (
+                    exact_results[closest_time][1, :]
+                    / exact_results[closest_time][0, :]
+                )
+                ax.plot(x, u_exact, "k--", linewidth=2, label="Exact")
 
             ax.set_xlabel("Position x (m)")
             ax.set_ylabel("Velocity u (m/s)")
@@ -328,7 +347,7 @@ def render_time_evolution(
     x: NDArray[np.float64],
     time_steps: List[float],
     results: Dict[float, NDArray[np.float64]],
-    scheme_name: str
+    scheme_name: str,
 ) -> None:
     """渲染时间演化静态图
 
@@ -360,9 +379,7 @@ def render_time_evolution(
         st.error("⚠️ Matplotlib 未安装")
 
 
-def render_error_table(
-    errors: Dict[str, Dict[str, float]]
-) -> None:
+def render_error_table(errors: Dict[str, Dict[str, float]]) -> None:
     """渲染误差表格
 
     Args:
@@ -372,7 +389,7 @@ def render_error_table(
         "格式": list(errors.keys()),
         "L1误差": [f"{e.get('l1', 0):.6f}" for e in errors.values()],
         "L2误差": [f"{e.get('l2', 0):.6f}" for e in errors.values()],
-        "L∞误差": [f"{e.get('linf', 0):.6f}" for e in errors.values()]
+        "L∞误差": [f"{e.get('linf', 0):.6f}" for e in errors.values()],
     }
 
     st.table(error_table)
@@ -393,7 +410,7 @@ def export_plot_png(fig) -> str:
         str: base64 编码的 PNG 图像
     """
     buf = io.BytesIO()
-    fig.savefig(buf, format='png', dpi=150, bbox_inches='tight')
+    fig.savefig(buf, format="png", dpi=150, bbox_inches="tight")
     buf.seek(0)
     img_str = base64.b64encode(buf.read()).decode()
     return img_str

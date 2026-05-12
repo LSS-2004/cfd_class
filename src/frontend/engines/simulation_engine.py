@@ -4,7 +4,8 @@
 处理模拟运行的业务逻辑
 """
 
-from typing import Dict, Any, Optional, Callable
+from typing import Any, Callable, Dict, Optional
+
 import numpy as np
 from numpy.typing import NDArray
 
@@ -27,10 +28,7 @@ class SimulationEngine:
         self.progress_callback = callback
 
     def run_simulation(
-        self,
-        params: Dict[str, Any],
-        schemes: list,
-        exact_solution: bool = False
+        self, params: Dict[str, Any], schemes: list, exact_solution: bool = False
     ) -> Dict[str, Any]:
         """运行模拟
 
@@ -54,13 +52,14 @@ class SimulationEngine:
                 "schemes": {},
                 "exact": None,
                 "success": True,
-                "errors": {}
+                "errors": {},
             }
 
             # 计算精确解
             if exact_solution:
                 try:
                     from src.core.solvers.exact_riemann import ExactRiemann
+
                     exact_solver = ExactRiemann(self.config)
                     results["exact"] = exact_solver.solve(self.config)
                 except ImportError:
@@ -88,8 +87,7 @@ class SimulationEngine:
                         final_result = result[final_t]
                         if final_result.ndim >= 2 and final_result.shape[0] >= 1:
                             errors = self._compute_errors(
-                                final_result[0, :],
-                                results["exact"][0, :]
+                                final_result[0, :], results["exact"][0, :]
                             )
                             results["errors"][scheme_name] = errors
                         else:
@@ -106,7 +104,7 @@ class SimulationEngine:
                 "error": f"核心模块未实现: {e}",
                 "config": None,
                 "schemes": {},
-                "exact": None
+                "exact": None,
             }
         except Exception as e:
             return {
@@ -114,13 +112,11 @@ class SimulationEngine:
                 "error": str(e),
                 "config": None,
                 "schemes": {},
-                "exact": None
+                "exact": None,
             }
 
     def _compute_errors(
-        self,
-        numerical: NDArray[np.float64],
-        exact: NDArray[np.float64]
+        self, numerical: NDArray[np.float64], exact: NDArray[np.float64]
     ) -> Dict[str, float]:
         """计算误差
 
@@ -137,11 +133,7 @@ class SimulationEngine:
         l2 = np.sqrt(np.sum((numerical - exact) ** 2) / len(exact)) * dx
         linf = np.max(np.abs(numerical - exact))
 
-        return {
-            "l1": l1,
-            "l2": l2,
-            "linf": linf
-        }
+        return {"l1": l1, "l2": l2, "linf": linf}
 
     def get_config_summary(self) -> Dict[str, Any]:
         """获取配置摘要
@@ -160,5 +152,5 @@ class SimulationEngine:
             "right_depth": self.config.h_R,
             "gravity": self.config.g,
             "end_time": self.config.t_end,
-            "cfl": self.config.cfl
+            "cfl": self.config.cfl,
         }

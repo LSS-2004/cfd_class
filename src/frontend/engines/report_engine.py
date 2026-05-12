@@ -4,9 +4,9 @@
 生成 HTML 分析报告
 """
 
-from typing import Dict, Any, Optional
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 class ReportEngine:
@@ -17,9 +17,7 @@ class ReportEngine:
         self.template = None
 
     def generate_html_report(
-        self,
-        results: Dict[str, Any],
-        output_path: Optional[str] = None
+        self, results: Dict[str, Any], output_path: Optional[str] = None
     ) -> str:
         """生成 HTML 报告
 
@@ -127,7 +125,7 @@ class ReportEngine:
     def _generate_summary(self, results: Dict[str, Any]) -> str:
         """生成摘要部分"""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
+
         html = f"""
         <h2>📋 报告摘要</h2>
         <div class="info">
@@ -182,7 +180,7 @@ class ReportEngine:
     def _generate_results(self, results: Dict[str, Any]) -> str:
         """生成结果部分"""
         schemes = results.get("schemes", {})
-        
+
         if not schemes:
             return ""
 
@@ -211,7 +209,7 @@ class ReportEngine:
     def _generate_errors(self, results: Dict[str, Any]) -> str:
         """生成误差部分"""
         errors = results.get("errors", {})
-        
+
         if not errors:
             return ""
 
@@ -235,9 +233,9 @@ class ReportEngine:
             </tr>
 """
             else:
-                l1_val = error_data.get('l1', None)
-                l2_val = error_data.get('l2', None)
-                linf_val = error_data.get('linf', None)
+                l1_val = error_data.get("l1", None)
+                l2_val = error_data.get("l2", None)
+                linf_val = error_data.get("linf", None)
 
                 l1_str = f"{l1_val:.6f}" if l1_val is not None else "N/A"
                 l2_str = f"{l2_val:.6f}" if l2_val is not None else "N/A"

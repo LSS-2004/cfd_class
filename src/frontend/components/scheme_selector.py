@@ -4,13 +4,13 @@
 提供数值格式选择功能
 """
 
+from typing import Dict, List, Optional
+
 import streamlit as st
-from typing import List, Dict, Optional
 
 
 def render_scheme_selector(
-    selected: Optional[List[str]] = None,
-    allow_multiple: bool = True
+    selected: Optional[List[str]] = None, allow_multiple: bool = True
 ) -> List[str]:
     """渲染格式选择器
 
@@ -29,38 +29,38 @@ def render_scheme_selector(
             "desc": "一阶格式，强稳定，适合基准对比",
             "order": 1,
             "tvd": True,
-            "icon": "🟢"
+            "icon": "🟢",
         },
         "Lax-Wendroff": {
             "desc": "二阶格式，适合光滑解测试",
             "order": 2,
             "tvd": False,
-            "icon": "🟡"
+            "icon": "🟡",
         },
         "MacCormack": {
             "desc": "二阶格式，高效预测校正",
             "order": 2,
             "tvd": False,
-            "icon": "🟡"
+            "icon": "🟡",
         },
         "Godunov": {
             "desc": "一阶+格式，精确Riemann求解",
             "order": 1,
             "tvd": True,
-            "icon": "🟢"
+            "icon": "🟢",
         },
         "HLL": {
             "desc": "一阶+格式，近似Riemann求解",
             "order": 1,
             "tvd": True,
-            "icon": "🟢"
+            "icon": "🟢",
         },
         "MUSCL-Hancock": {
             "desc": "二阶TVD格式，高精度推荐",
             "order": 2,
             "tvd": True,
-            "icon": "🔵"
-        }
+            "icon": "🔵",
+        },
     }
 
     st.sidebar.header("📐 数值格式选择")
@@ -71,17 +71,17 @@ def render_scheme_selector(
         st.sidebar.markdown("**选择格式（可多选）:**")
         for name, info in schemes.items():
             if st.sidebar.checkbox(
-                f"{info['icon']} {name}",
-                value=(name in selected),
-                help=info["desc"]
+                f"{info['icon']} {name}", value=(name in selected), help=info["desc"]
             ):
                 selected_schemes.append(name)
-                st.sidebar.caption(f"   精度: {info['order']}阶 | TVD: {'是' if info['tvd'] else '否'}")
+                st.sidebar.caption(
+                    f"   精度: {info['order']}阶 | TVD: {'是' if info['tvd'] else '否'}"
+                )
     else:
         selected_name = st.sidebar.radio(
             "选择格式",
             list(schemes.keys()),
-            index=list(schemes.keys()).index(selected[0]) if selected else 0
+            index=list(schemes.keys()).index(selected[0]) if selected else 0,
         )
         selected_schemes = [selected_name]
 
@@ -104,17 +104,25 @@ def render_scheme_info(schemes: List[str]) -> None:
             for s in schemes
         ],
         "TVD稳定性": [
-            "✅ 是" if s in ["Lax-Friedrichs", "Godunov", "HLL", "MUSCL-Hancock"]
-            else "❌ 否"
+            (
+                "✅ 是"
+                if s in ["Lax-Friedrichs", "Godunov", "HLL", "MUSCL-Hancock"]
+                else "❌ 否"
+            )
             for s in schemes
         ],
         "推荐场景": [
-            "基准对比" if s == "Lax-Friedrichs"
-            else "光滑解" if s in ["Lax-Wendroff", "MacCormack"]
-            else "高精度" if s == "MUSCL-Hancock"
-            else "工程实用"
+            (
+                "基准对比"
+                if s == "Lax-Friedrichs"
+                else (
+                    "光滑解"
+                    if s in ["Lax-Wendroff", "MacCormack"]
+                    else "高精度" if s == "MUSCL-Hancock" else "工程实用"
+                )
+            )
             for s in schemes
-        ]
+        ],
     }
 
     st.table(scheme_data)

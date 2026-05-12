@@ -4,16 +4,13 @@
 参数配置、物理模拟、结果展示
 """
 
-import streamlit as st
+from typing import Any, Dict, Optional
+
 import numpy as np
-from typing import Dict, Any, Optional
+import streamlit as st
 
 # 页面配置
-st.set_page_config(
-    page_title="模拟运行 | CFD-Class",
-    page_icon="📊",
-    layout="wide"
-)
+st.set_page_config(page_title="模拟运行 | CFD-Class", page_icon="📊", layout="wide")
 
 
 def load_core_modules():
@@ -21,9 +18,14 @@ def load_core_modules():
     try:
         from src.core.config import DamBreakConfig
         from src.core.schemes import (
-            LaxFriedrichs, LaxWendroff, MacCormack,
-            Godunov, HLL, MUSCLHancock
+            HLL,
+            Godunov,
+            LaxFriedrichs,
+            LaxWendroff,
+            MacCormack,
+            MUSCLHancock,
         )
+
         return True
     except ImportError as e:
         st.error(f"⚠️ 核心模块加载失败: {e}")
@@ -46,7 +48,7 @@ def create_parameter_panel() -> Dict[str, Any]:
             max_value=100.0,
             value=10.0,
             step=1.0,
-            help="计算域长度"
+            help="计算域长度",
         )
         nx = st.slider(
             "网格数 nx",
@@ -54,7 +56,7 @@ def create_parameter_panel() -> Dict[str, Any]:
             max_value=500,
             value=200,
             step=10,
-            help="空间网格数量"
+            help="空间网格数量",
         )
         x_dam = st.number_input(
             "溃坝位置 x_dam (m)",
@@ -62,7 +64,7 @@ def create_parameter_panel() -> Dict[str, Any]:
             max_value=L,
             value=L / 2,
             step=0.5,
-            help="溃坝位置（相对于domain左端）"
+            help="溃坝位置（相对于domain左端）",
         )
 
     with st.sidebar.expander("🌊 初始条件", expanded=True):
@@ -72,7 +74,7 @@ def create_parameter_panel() -> Dict[str, Any]:
             max_value=20.0,
             value=2.0,
             step=0.1,
-            help="溃坝左侧初始水深"
+            help="溃坝左侧初始水深",
         )
         h_R = st.number_input(
             "右侧水深 h_R (m)",
@@ -80,7 +82,7 @@ def create_parameter_panel() -> Dict[str, Any]:
             max_value=20.0,
             value=1.0,
             step=0.1,
-            help="溃坝右侧初始水深"
+            help="溃坝右侧初始水深",
         )
         u_L = st.number_input(
             "左侧速度 u_L (m/s)",
@@ -88,7 +90,7 @@ def create_parameter_panel() -> Dict[str, Any]:
             max_value=50.0,
             value=0.0,
             step=0.1,
-            help="溃坝左侧初始速度"
+            help="溃坝左侧初始速度",
         )
         u_R = st.number_input(
             "右侧速度 u_R (m/s)",
@@ -96,7 +98,7 @@ def create_parameter_panel() -> Dict[str, Any]:
             max_value=50.0,
             value=0.0,
             step=0.1,
-            help="溃坝右侧初始速度"
+            help="溃坝右侧初始速度",
         )
 
     with st.sidebar.expander("⏱️ 时间参数", expanded=True):
@@ -106,7 +108,7 @@ def create_parameter_panel() -> Dict[str, Any]:
             max_value=20.0,
             value=9.81,
             step=0.01,
-            help="重力加速度（默认9.81）"
+            help="重力加速度（默认9.81）",
         )
         t_end = st.number_input(
             "终止时间 t_end (s)",
@@ -114,7 +116,7 @@ def create_parameter_panel() -> Dict[str, Any]:
             max_value=10.0,
             value=1.0,
             step=0.1,
-            help="模拟终止时间"
+            help="模拟终止时间",
         )
         cfl = st.slider(
             "CFL数",
@@ -122,7 +124,7 @@ def create_parameter_panel() -> Dict[str, Any]:
             max_value=0.9,
             value=0.5,
             step=0.05,
-            help="Courant-Friedrichs-Lewy条件数"
+            help="Courant-Friedrichs-Lewy条件数",
         )
 
     return {
@@ -135,7 +137,7 @@ def create_parameter_panel() -> Dict[str, Any]:
         "u_R": u_R,
         "g": g,
         "t_end": t_end,
-        "cfl": cfl
+        "cfl": cfl,
     }
 
 
@@ -151,33 +153,13 @@ def create_scheme_selector() -> list:
         "Lax-Friedrichs": {
             "desc": "一阶格式，强稳定，适合基准对比",
             "order": 1,
-            "tvd": True
+            "tvd": True,
         },
-        "Lax-Wendroff": {
-            "desc": "二阶格式，适合光滑解测试",
-            "order": 2,
-            "tvd": False
-        },
-        "MacCormack": {
-            "desc": "二阶格式，高效预测校正",
-            "order": 2,
-            "tvd": False
-        },
-        "Godunov": {
-            "desc": "一阶+格式，精确Riemann求解",
-            "order": 1,
-            "tvd": True
-        },
-        "HLL": {
-            "desc": "一阶+格式，近似Riemann求解",
-            "order": 1,
-            "tvd": True
-        },
-        "MUSCL-Hancock": {
-            "desc": "二阶TVD格式，高精度推荐",
-            "order": 2,
-            "tvd": True
-        }
+        "Lax-Wendroff": {"desc": "二阶格式，适合光滑解测试", "order": 2, "tvd": False},
+        "MacCormack": {"desc": "二阶格式，高效预测校正", "order": 2, "tvd": False},
+        "Godunov": {"desc": "一阶+格式，精确Riemann求解", "order": 1, "tvd": True},
+        "HLL": {"desc": "一阶+格式，近似Riemann求解", "order": 1, "tvd": True},
+        "MUSCL-Hancock": {"desc": "二阶TVD格式，高精度推荐", "order": 2, "tvd": True},
     }
 
     selected_schemes = []
@@ -185,12 +167,12 @@ def create_scheme_selector() -> list:
     st.sidebar.markdown("**选择格式（可多选）:**")
     for name, info in schemes.items():
         if st.sidebar.checkbox(
-            f"✅ {name}",
-            value=(name == "Lax-Friedrichs"),
-            help=info["desc"]
+            f"✅ {name}", value=(name == "Lax-Friedrichs"), help=info["desc"]
         ):
             selected_schemes.append(name)
-            st.sidebar.caption(f"   精度: {info['order']}阶 | TVD: {'是' if info['tvd'] else '否'}")
+            st.sidebar.caption(
+                f"   精度: {info['order']}阶 | TVD: {'是' if info['tvd'] else '否'}"
+            )
 
     if not selected_schemes:
         st.sidebar.warning("⚠️ 请至少选择一个格式")
@@ -213,17 +195,25 @@ def display_scheme_info(schemes: list):
             for s in schemes
         ],
         "TVD稳定性": [
-            "✅ 是" if s in ["Lax-Friedrichs", "Godunov", "HLL", "MUSCL-Hancock"]
-            else "❌ 否"
+            (
+                "✅ 是"
+                if s in ["Lax-Friedrichs", "Godunov", "HLL", "MUSCL-Hancock"]
+                else "❌ 否"
+            )
             for s in schemes
         ],
         "适用场景": [
-            "基准对比" if s == "Lax-Friedrichs"
-            else "光滑解" if s in ["Lax-Wendroff", "MacCormack"]
-            else "高精度" if s == "MUSCL-Hancock"
-            else "工程实用"
+            (
+                "基准对比"
+                if s == "Lax-Friedrichs"
+                else (
+                    "光滑解"
+                    if s in ["Lax-Wendroff", "MacCormack"]
+                    else "高精度" if s == "MUSCL-Hancock" else "工程实用"
+                )
+            )
             for s in schemes
-        ]
+        ],
     }
 
     st.table(scheme_data)
@@ -251,18 +241,18 @@ def run_simulation(params: Dict[str, Any], schemes: list) -> Optional[Dict]:
             from src.core.schemes import get_scheme
 
             config = DamBreakConfig(
-                    domain_length=params["domain_length"],
-                    nx=params["nx"],
-                    x_dam=params["x_dam"],
-                    h_l=params["h_l"],
-                    h_r=params["h_r"],
-                    u_l=params["u_l"],
-                    u_r=params["u_r"],
-                    g=params["g"],
-                    t_end=params["t_end"],
-                    cfl=params["cfl"],
-                    boundary_type=params.get("boundary_type", "transmissive")
-                )
+                domain_length=params["domain_length"],
+                nx=params["nx"],
+                x_dam=params["x_dam"],
+                h_l=params["h_l"],
+                h_r=params["h_r"],
+                u_l=params["u_l"],
+                u_r=params["u_r"],
+                g=params["g"],
+                t_end=params["t_end"],
+                cfl=params["cfl"],
+                boundary_type=params.get("boundary_type", "transmissive"),
+            )
 
             results = {}
             for idx, scheme_name in enumerate(schemes):
@@ -277,11 +267,7 @@ def run_simulation(params: Dict[str, Any], schemes: list) -> Optional[Dict]:
             progress_bar.empty()
             status_text.empty()
 
-            return {
-                "config": config,
-                "results": results,
-                "success": True
-            }
+            return {"config": config, "results": results, "success": True}
 
         except ImportError:
             st.error("❌ 核心模块未实现，请先完成 #5-#14 Issue")
@@ -349,12 +335,7 @@ def display_results(results: Dict):
             exact_solver = ExactRiemann(config)
             exact_solution = exact_solver.solve(config)
 
-            error_data = {
-                "格式": [],
-                "L1误差": [],
-                "L2误差": [],
-                "L∞误差": []
-            }
+            error_data = {"格式": [], "L1误差": [], "L2误差": [], "L∞误差": []}
 
             for scheme_name, result in schemes_results.items():
                 if not result:

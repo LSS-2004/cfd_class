@@ -4,15 +4,12 @@
 提供时间演化动画和对比功能
 """
 
-import streamlit as st
-import numpy as np
 from typing import Dict, List
 
-st.set_page_config(
-    page_title="动画演示 | CFD-Class",
-    page_icon="🎬",
-    layout="wide"
-)
+import numpy as np
+import streamlit as st
+
+st.set_page_config(page_title="动画演示 | CFD-Class", page_icon="🎬", layout="wide")
 
 
 def main():
@@ -39,7 +36,14 @@ def main():
     st.sidebar.divider()
     scheme = st.sidebar.selectbox(
         "选择数值方案",
-        ["Lax-Friedrichs", "Lax-Wendroff", "MacCormack", "Godunov", "HLL", "MUSCL-Hancock"]
+        [
+            "Lax-Friedrichs",
+            "Lax-Wendroff",
+            "MacCormack",
+            "Godunov",
+            "HLL",
+            "MUSCL-Hancock",
+        ],
     )
 
     # 主内容区
@@ -59,7 +63,7 @@ def main():
                         x_dam=x_dam,
                         h_l=h_l,
                         h_r=h_r,
-                        t_end=t_end
+                        t_end=t_end,
                     )
 
                     selected_scheme = get_scheme(scheme)
@@ -117,7 +121,7 @@ def display_animation(x: np.ndarray, result: Dict, scheme_name: str, n_steps: in
             min_value=0.0,
             max_value=max(time_points),
             value=0.0,
-            step=time_points[1] - time_points[0] if len(time_points) > 1 else 0.1
+            step=time_points[1] - time_points[0] if len(time_points) > 1 else 0.1,
         )
 
         # 找到最接近的时间步
@@ -130,8 +134,8 @@ def display_animation(x: np.ndarray, result: Dict, scheme_name: str, n_steps: in
             # 水深
             fig, ax = plt.subplots(figsize=(8, 5))
             h = closest_result[0, :]
-            ax.fill_between(x, 0, h, alpha=0.3, color='blue')
-            ax.plot(x, h, 'b-', linewidth=2)
+            ax.fill_between(x, 0, h, alpha=0.3, color="blue")
+            ax.plot(x, h, "b-", linewidth=2)
             ax.set_xlabel("Position x (m)")
             ax.set_ylabel("Water Depth h (m)")
             ax.set_title(f"水深分布 (t = {closest_time:.3f}s)")
@@ -142,7 +146,7 @@ def display_animation(x: np.ndarray, result: Dict, scheme_name: str, n_steps: in
             # 速度
             fig, ax = plt.subplots(figsize=(8, 5))
             u = closest_result[1, :] / closest_result[0, :]
-            ax.plot(x, u, 'r-', linewidth=2)
+            ax.plot(x, u, "r-", linewidth=2)
             ax.set_xlabel("Position x (m)")
             ax.set_ylabel("Velocity u (m/s)")
             ax.set_title(f"速度分布 (t = {closest_time:.3f}s)")

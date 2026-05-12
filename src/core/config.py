@@ -5,7 +5,8 @@
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Callable
+from typing import Callable, Optional
+
 import numpy as np
 
 
@@ -13,7 +14,7 @@ import numpy as np
 class DamBreakConfig:
     """
     溃坝问题配置类
-    
+
     参数说明:
         domain_length: 计算域长度 [m]
         nx: 网格单元数量
@@ -29,7 +30,7 @@ class DamBreakConfig:
         snapshot_times: 快照时间点列表（可选）
         progress_callback: 进度回调函数（可选）
     """
-    
+
     domain_length: float = 1000.0
     nx: int = 200
     _x_dam: Optional[float] = None
@@ -43,24 +44,24 @@ class DamBreakConfig:
     boundary_type: str = "transmissive"
     snapshot_times: Optional[list] = None
     progress_callback: Optional[Callable[[float], None]] = None
-    
+
     @property
     def x_dam(self) -> float:
         """大坝位置，默认为域中心"""
         if self._x_dam is None:
             return self.domain_length / 2
         return self._x_dam
-    
+
     @property
     def dx(self) -> float:
         """网格间距"""
         return self.domain_length / self.nx
-    
+
     @property
     def x(self) -> np.ndarray:
         """空间坐标数组（单元中心）"""
         return np.linspace(self.dx / 2, self.domain_length - self.dx / 2, self.nx)
-    
+
     @property
     def q_initial(self) -> np.ndarray:
         """初始状态向量 [h, h*u]^T"""
@@ -70,16 +71,16 @@ class DamBreakConfig:
         q[0, :] = h
         q[1, :] = h * u
         return q
-    
+
     @property
     def dry_tolerance(self) -> float:
         """干底判断阈值"""
         return 1e-12
-    
+
     def is_dry(self, h: float) -> bool:
         """判断是否为干底"""
         return h < self.dry_tolerance
-    
+
     def validate(self) -> bool:
         """验证配置参数有效性"""
         if self.domain_length <= 0:

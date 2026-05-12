@@ -12,9 +12,9 @@ CFD-Class Frontend Engines Module
 __version__ = "0.1.0"
 __author__ = "CFD-Team"
 
-from .simulation_engine import SimulationEngine
 from .comparison_engine import ComparisonEngine
 from .report_engine import ReportEngine
+from .simulation_engine import SimulationEngine
 
 __all__ = [
     "SimulationEngine",

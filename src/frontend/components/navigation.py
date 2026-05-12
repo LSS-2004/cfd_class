@@ -4,13 +4,13 @@
 提供页面导航和面包屑功能
 """
 
+from typing import Dict, List, Optional
+
 import streamlit as st
-from typing import List, Dict, Optional
 
 
 def render_navigation(
-    current_page: str,
-    pages: Optional[List[Dict[str, str]]] = None
+    current_page: str, pages: Optional[List[Dict[str, str]]] = None
 ) -> None:
     """渲染导航栏
 
@@ -39,7 +39,7 @@ def render_navigation(
                     f"<span style='font-size: 24px;'>{page['icon']}</span><br>"
                     f"<strong>{page['name']}</strong>"
                     f"</div>",
-                    unsafe_allow_html=True
+                    unsafe_allow_html=True,
                 )
             else:
                 st.markdown(
@@ -49,7 +49,7 @@ def render_navigation(
                     f"<span style='font-size: 24px;'>{page['icon']}</span><br>"
                     f"{page['name']}"
                     f"</div>",
-                    unsafe_allow_html=True
+                    unsafe_allow_html=True,
                 )
 
 
@@ -64,9 +64,7 @@ def render_breadcrumb(path: List[str]) -> None:
 
 
 def render_page_header(
-    title: str,
-    subtitle: Optional[str] = None,
-    icon: Optional[str] = None
+    title: str, subtitle: Optional[str] = None, icon: Optional[str] = None
 ) -> None:
     """渲染页面头部
 
@@ -94,5 +92,5 @@ def render_footer() -> None:
         "Made with ❤️ by CFD-Team | 符合GB/T国标的教学软件 | "
         "<a href='https://github.com/kaklos-cyber/cfd_class' target='_blank'>GitHub</a>"
         "</p>",
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )

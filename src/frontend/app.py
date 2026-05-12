@@ -6,15 +6,16 @@ CFD-Class 主应用入口
 - 展示系统概览和快速链接
 """
 
-import streamlit as st
 from pathlib import Path
+
+import streamlit as st
 
 # 页面配置
 st.set_page_config(
     page_title="CFD-Class | 一维溃坝CFD教学软件",
     page_icon="🌊",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
 )
 
 # 路径配置
@@ -34,32 +35,16 @@ def main():
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric(
-            label="数值格式",
-            value="6种",
-            delta="FVM格式对比"
-        )
+        st.metric(label="数值格式", value="6种", delta="FVM格式对比")
 
     with col2:
-        st.metric(
-            label="精度阶数",
-            value="1-2阶",
-            delta="TVD稳定性"
-        )
+        st.metric(label="精度阶数", value="1-2阶", delta="TVD稳定性")
 
     with col3:
-        st.metric(
-            label="适用场景",
-            value="教学演示",
-            delta="科研分析"
-        )
+        st.metric(label="适用场景", value="教学演示", delta="科研分析")
 
     with col4:
-        st.metric(
-            label="输出格式",
-            value="HTML",
-            delta="图表+动画"
-        )
+        st.metric(label="输出格式", value="HTML", delta="图表+动画")
 
     st.divider()
 
@@ -136,7 +121,7 @@ def main():
         ("📊 Streamlit", "Web用户界面"),
         ("🔢 NumPy/SciPy", "数值计算"),
         ("📈 Matplotlib", "可视化绑图"),
-        ("🧪 pytest", "单元测试框架")
+        ("🧪 pytest", "单元测试框架"),
     ]
 
     for idx, (tech, desc) in enumerate(techs):
@@ -182,7 +167,7 @@ def main():
         "Made with ❤️ by CFD-Team | 符合GB/T国标的教学软件 | "
         "<a href='https://github.com/kaklos-cyber/cfd_class' target='_blank'>GitHub</a>"
         "</p>",
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
 

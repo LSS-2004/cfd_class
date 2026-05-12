@@ -10,8 +10,8 @@ from src.core.analysis.error_analysis import (
     compute_l1_error,
     compute_l2_error,
     compute_linf_error,
+    compute_mass_conservation,
     estimate_convergence_order,
-    compute_mass_conservation
 )
 
 __all__ = [
@@ -19,5 +19,5 @@ __all__ = [
     "compute_l2_error",
     "compute_linf_error",
     "estimate_convergence_order",
-    "compute_mass_conservation"
+    "compute_mass_conservation",
 ]

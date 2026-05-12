@@ -4,15 +4,12 @@
 提供 HTML 报告生成功能
 """
 
-import streamlit as st
-import numpy as np
-from typing import Dict, Any
+from typing import Any, Dict
 
-st.set_page_config(
-    page_title="报告生成 | CFD-Class",
-    page_icon="📝",
-    layout="wide"
-)
+import numpy as np
+import streamlit as st
+
+st.set_page_config(page_title="报告生成 | CFD-Class", page_icon="📝", layout="wide")
 
 
 def main():
@@ -43,9 +40,11 @@ def main():
         "MacCormack",
         "Godunov",
         "HLL",
-        "MUSCL-Hancock"
+        "MUSCL-Hancock",
     ]
-    selected_schemes = st.sidebar.multiselect("选择计算方案", available_schemes, default=["Lax-Friedrichs"])
+    selected_schemes = st.sidebar.multiselect(
+        "选择计算方案", available_schemes, default=["Lax-Friedrichs"]
+    )
 
     # 报告配置
     st.sidebar.divider()
@@ -65,7 +64,7 @@ def main():
         "h_r": h_r,
         "t_end": t_end,
         "cfl": cfl,
-        "schemes": selected_schemes
+        "schemes": selected_schemes,
     }
 
     # 参数摘要
@@ -93,9 +92,12 @@ def main():
 
                     # 生成报告
                     report_html = generate_report_html(
-                        report_title, params, results, config,
+                        report_title,
+                        params,
+                        results,
+                        config,
                         include_exact=include_exact,
-                        include_convergence=include_convergence
+                        include_convergence=include_convergence,
                     )
 
                     st.success("✅ 报告生成完成！")
@@ -109,7 +111,7 @@ def main():
                         label="⬇️ 下载 HTML 报告",
                         data=report_html,
                         file_name=f"CFD_Class_Report_{np.datetime64('now')}.html",
-                        mime="text/html"
+                        mime="text/html",
                     )
 
                 except ImportError as e:
@@ -126,7 +128,7 @@ def generate_report_html(
     results: Dict,
     config: Any,
     include_exact: bool = True,
-    include_convergence: bool = False
+    include_convergence: bool = False,
 ) -> str:
     """生成 HTML 报告
 

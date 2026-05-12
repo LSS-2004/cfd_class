@@ -10,7 +10,13 @@
 """
 
 from src.core.config import DamBreakConfig
-from src.core.utils import flux, roe_average, compute_max_speed, apply_boundary_conditions, positivity_fix
+from src.core.utils import (
+    apply_boundary_conditions,
+    compute_max_speed,
+    flux,
+    positivity_fix,
+    roe_average,
+)
 
 __all__ = [
     "DamBreakConfig",
@@ -18,5 +24,5 @@ __all__ = [
     "roe_average",
     "compute_max_speed",
     "apply_boundary_conditions",
-    "positivity_fix"
+    "positivity_fix",
 ]

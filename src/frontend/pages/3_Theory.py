@@ -4,14 +4,11 @@
 浅水方程、激波管理论、TVD概念讲解
 """
 
-import streamlit as st
 from pathlib import Path
 
-st.set_page_config(
-    page_title="理论背景 | CFD-Class",
-    page_icon="🏠",
-    layout="wide"
-)
+import streamlit as st
+
+st.set_page_config(page_title="理论背景 | CFD-Class", page_icon="🏠", layout="wide")
 
 
 def display_swe_derivation():
@@ -184,23 +181,23 @@ def display_fvm_schemes():
         "Lax-Friedrichs": {
             "formula": "U_i^{n+1} = \\frac{1}{2}(U_L + U_R) - \\frac{\\Delta t}{2\\Delta x}(F_R - F_L)",
             "features": ["一阶精度", "强稳定性", "强数值扩散"],
-            "application": "基准格式、教学演示"
+            "application": "基准格式、教学演示",
         },
         "Lax-Wendroff": {
             "formula": "U_i^{n+1} = U_i^n - \\frac{\\Delta t}{\\Delta x}(F_i - F_{i-1}) + \\frac{1}{2}\\frac{\\Delta t^2}{\\Delta x^2}\\frac{\\partial F}{\\partial U}(F_i - F_{i-1})",
             "features": ["二阶精度", "高精度光滑解", "激波震荡"],
-            "application": "光滑解测试"
+            "application": "光滑解测试",
         },
         "Godunov": {
             "formula": "逐单元Riemann问题求解",
             "features": ["一阶+精度", "精确激波捕捉", "计算量大"],
-            "application": "高精度基准"
+            "application": "高精度基准",
         },
         "MUSCL-Hancock": {
             "formula": "预测-校正 + TVD限制器",
             "features": ["二阶TVD", "高精度高稳定性", "激波平滑"],
-            "application": "推荐工程应用"
-        }
+            "application": "推荐工程应用",
+        },
     }
 
     for name, info in schemes.items():
@@ -263,7 +260,7 @@ def display_references():
             "year": "1983",
             "journal": "Journal of Computational Physics",
             "volume": "49",
-            "pages": "357-393"
+            "pages": "357-393",
         },
         {
             "title": "Towards the Ultimate Conservative Difference Scheme",
@@ -271,7 +268,7 @@ def display_references():
             "year": "1974",
             "journal": "Journal of Computational Physics",
             "volume": "14",
-            "pages": "361-370"
+            "pages": "361-370",
         },
         {
             "title": "On the Different Formulations of the Consolidation Equations of Shallow Water Theory",
@@ -279,8 +276,8 @@ def display_references():
             "year": "1957",
             "journal": "Commun. Pure Appl. Math.",
             "volume": "10",
-            "pages": "567-581"
-        }
+            "pages": "567-581",
+        },
     ]
 
     for idx, ref in enumerate(references, 1):
@@ -307,9 +304,9 @@ def main():
             "Riemann求解器",
             "有限体积格式",
             "TVD概念",
-            "参考文献"
+            "参考文献",
         ],
-        index=0
+        index=0,
     )
 
     if menu == "浅水方程":

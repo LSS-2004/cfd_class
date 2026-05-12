@@ -4,15 +4,12 @@
 六种FVM格式的性能和精度对比分析
 """
 
-import streamlit as st
-import numpy as np
 from typing import Dict, List
 
-st.set_page_config(
-    page_title="格式对比 | CFD-Class",
-    page_icon="🔬",
-    layout="wide"
-)
+import numpy as np
+import streamlit as st
+
+st.set_page_config(page_title="格式对比 | CFD-Class", page_icon="🔬", layout="wide")
 
 
 def display_scheme_comparison_table():
@@ -26,10 +23,17 @@ def display_scheme_comparison_table():
             "MacCormack",
             "Godunov",
             "HLL",
-            "MUSCL-Hancock"
+            "MUSCL-Hancock",
         ],
         "精度阶数": ["一阶", "二阶", "二阶", "一阶+", "一阶+", "二阶"],
-        "TVD稳定性": ["✅ 强稳定", "❌ 光滑区", "❌ 光滑区", "✅ 精确", "✅ 近似", "✅ TVD"],
+        "TVD稳定性": [
+            "✅ 强稳定",
+            "❌ 光滑区",
+            "❌ 光滑区",
+            "✅ 精确",
+            "✅ 近似",
+            "✅ TVD",
+        ],
         "计算效率": ["⭐⭐⭐", "⭐⭐⭐⭐", "⭐⭐⭐⭐", "⭐⭐", "⭐⭐⭐", "⭐⭐⭐"],
         "激波捕捉": ["⚠️ 模糊", "⚠️ 震荡", "⚠️ 震荡", "✅ 精确", "✅ 平滑", "✅ 平滑"],
         "推荐场景": [
@@ -38,8 +42,8 @@ def display_scheme_comparison_table():
             "快速预测",
             "高精度基准",
             "工程实用",
-            "高精度推荐"
-        ]
+            "高精度推荐",
+        ],
     }
 
     st.table(comparison_data)
@@ -66,7 +70,7 @@ def create_parameter_selection():
         "u_R": 0.0,
         "g": 9.81,
         "t_end": t_end,
-        "cfl": 0.5
+        "cfl": 0.5,
     }
 
 
@@ -93,7 +97,9 @@ def plot_scheme_comparison(results: Dict):
 
             if len(h_data) == 0:
                 continue
-            final_h = h_data[-1] if hasattr(h_data, '__len__') and len(h_data) > 0 else h_data
+            final_h = (
+                h_data[-1] if hasattr(h_data, "__len__") and len(h_data) > 0 else h_data
+            )
 
             axes[0, 0].plot(x, final_h, label=scheme_name, color=color, linewidth=2)
             axes[0, 1].plot(x, final_h, label=scheme_name, color=color, linewidth=2)
@@ -113,11 +119,7 @@ def plot_scheme_comparison(results: Dict):
 
         for idx, (scheme_name, errors) in enumerate(results["errors"].items()):
             axes[1, 0].bar(
-                idx,
-                errors["l1"],
-                color=colors[idx],
-                label=scheme_name,
-                alpha=0.7
+                idx, errors["l1"], color=colors[idx], label=scheme_name, alpha=0.7
             )
 
         axes[1, 0].set_xlabel("格式")
@@ -129,11 +131,7 @@ def plot_scheme_comparison(results: Dict):
 
         for idx, (scheme_name, errors) in enumerate(results["errors"].items()):
             axes[1, 1].bar(
-                idx,
-                errors["linf"],
-                color=colors[idx],
-                label=scheme_name,
-                alpha=0.7
+                idx, errors["linf"], color=colors[idx], label=scheme_name, alpha=0.7
             )
 
         axes[1, 1].set_xlabel("格式")
@@ -163,7 +161,7 @@ def display_error_analysis(errors: Dict):
         "L1误差": [f"{e['l1']:.6f}" for e in errors.values()],
         "L2误差": [f"{e['l2']:.6f}" for e in errors.values()],
         "L∞误差": [f"{e['linf']:.6f}" for e in errors.values()],
-        "计算时间(ms)": [f"{e.get('time', 0):.2f}" for e in errors.values()]
+        "计算时间(ms)": [f"{e.get('time', 0):.2f}" for e in errors.values()],
     }
 
     st.table(error_table)
@@ -242,13 +240,11 @@ def render_comparison_dashboard():
         "MacCormack",
         "Godunov",
         "HLL",
-        "MUSCL-Hancock"
+        "MUSCL-Hancock",
     ]
 
     selected_schemes = st.multiselect(
-        "选择要对比的格式",
-        all_schemes,
-        default=["Lax-Friedrichs", "MUSCL-Hancock"]
+        "选择要对比的格式", all_schemes, default=["Lax-Friedrichs", "MUSCL-Hancock"]
     )
 
     if st.button("▶️ 运行对比实验", type="primary"):
@@ -267,12 +263,13 @@ def render_comparison_dashboard():
                         "t": params["t_end"],
                         "schemes": selected_schemes,
                         "h_results": {},
-                        "errors": {}
+                        "errors": {},
                     }
 
                     exact_solver = None
                     try:
                         from src.core.solvers.exact_riemann import ExactRiemann
+
                         exact_solver = ExactRiemann(config)
                         exact_solution = exact_solver.solve(config)
                     except ImportError:
@@ -291,13 +288,16 @@ def render_comparison_dashboard():
                             if exact_solver is not None:
                                 exact = exact_solution[0, :]
                                 l1 = np.sum(np.abs(h - exact)) / len(exact) * config.dx
-                                l2 = np.sqrt(np.sum((h - exact) ** 2) / len(exact)) * config.dx
+                                l2 = (
+                                    np.sqrt(np.sum((h - exact) ** 2) / len(exact))
+                                    * config.dx
+                                )
                                 linf = np.max(np.abs(h - exact))
 
                                 results["errors"][scheme_name] = {
                                     "l1": l1,
                                     "l2": l2,
-                                    "linf": linf
+                                    "linf": linf,
                                 }
 
                     st.success("✅ 对比实验完成！")
