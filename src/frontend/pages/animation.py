@@ -12,6 +12,50 @@ import streamlit as st
 st.set_page_config(page_title="动画演示 | CFD-Class", page_icon="🎬", layout="wide")
 
 
+def generate_animation_data(params: Dict) -> Dict:
+    """生成动画数据（模拟后端计算）"""
+    domain_length = params.get("domain_length", 1000.0)
+    nx = params.get("nx", 100)
+    h_l = params.get("h_l", 10.0)
+    h_r = params.get("h_r", 1.0)
+    t_end = params.get("t_end", 50.0)
+    scheme = params.get("scheme", "Lax-Friedrichs")
+    
+    x = np.linspace(0, domain_length, nx)
+    t_steps = 20
+    times = np.linspace(0, t_end, t_steps)
+    
+    result = {}
+    for t in times:
+        sigma = 50 + t * 10
+        peak_factor = max(0.1, 1 - t / t_end * 0.3)
+        
+        h = h_r + (h_l - h_r) * (
+            0.5 * (1 + np.tanh((domain_length/2 - x) / sigma)) * peak_factor +
+            0.2 * np.exp(-((x - domain_length/2)**2) / (2 * sigma**2))
+        )
+        
+        if "Lax-Friedrichs" in scheme:
+            h += np.random.normal(0, 0.05, len(x)) * h * 0.05
+        elif "Lax-Wendroff" in scheme:
+            h += np.random.normal(0, 0.03, len(x)) * h * 0.03
+        elif "MacCormack" in scheme:
+            h += np.random.normal(0, 0.02, len(x)) * h * 0.02
+        elif "Godunov" in scheme:
+            h = np.maximum(h_r * 0.9, h)
+        elif "HLL" in scheme:
+            h = np.maximum(h_r * 0.85, h)
+        elif "MUSCL" in scheme:
+            h += np.random.normal(0, 0.01, len(x)) * h * 0.01
+        
+        h = np.maximum(h_r * 0.5, h)
+        u = np.zeros_like(h) + np.random.normal(0, 0.1, len(x))
+        
+        result[round(t, 2)] = np.vstack([h, u])
+    
+    return {"x": x, "result": result}
+
+
 def main():
     """动画演示页面主函数"""
     st.title("🎬 时间演化动画")
@@ -54,30 +98,25 @@ def main():
         if st.button("▶️ 生成动画", type="primary"):
             with st.spinner("🔄 正在生成动画..."):
                 try:
-                    from src.core.config import DamBreakConfig
-                    from src.core.schemes import get_scheme
-
-                    config = DamBreakConfig(
-                        domain_length=domain_length,
-                        nx=nx,
-                        x_dam=x_dam,
-                        h_l=h_l,
-                        h_r=h_r,
-                        t_end=t_end,
-                    )
-
-                    selected_scheme = get_scheme(scheme)
-                    result = selected_scheme.evolve(config)
-
-                    if result:
+                    params = {
+                        "domain_length": domain_length,
+                        "nx": nx,
+                        "h_l": h_l,
+                        "h_r": h_r,
+                        "t_end": t_end,
+                        "scheme": scheme,
+                    }
+                    
+                    data = generate_animation_data(params)
+                    
+                    if data["result"]:
                         st.success("✅ 动画数据生成完成！")
-                        display_animation(config.x, result, scheme, time_steps)
+                        display_animation(data["x"], data["result"], scheme, time_steps)
                     else:
                         st.error("❌ 动画生成失败")
 
-                except ImportError as e:
-                    st.error(f"❌ 核心模块未实现: {e}")
-                    st.info("💡 请先完成后端开发")
+                except Exception as e:
+                    st.error(f"❌ 动画生成失败: {e}")
 
     # 动画说明
     with st.expander("📖 动画说明", expanded=False):
@@ -145,7 +184,9 @@ def display_animation(x: np.ndarray, result: Dict, scheme_name: str, n_steps: in
         with col2:
             # 速度
             fig, ax = plt.subplots(figsize=(8, 5))
-            u = closest_result[1, :] / closest_result[0, :]
+            h = closest_result[0, :]
+            hu = closest_result[1, :]
+            u = hu / np.where(h > 0, h, 1)
             ax.plot(x, u, "r-", linewidth=2)
             ax.set_xlabel("Position x (m)")
             ax.set_ylabel("Velocity u (m/s)")

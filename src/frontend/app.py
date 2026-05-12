@@ -19,10 +19,8 @@ st.set_page_config(
 )
 
 # 路径配置
-import sys
 BASE_DIR = Path(__file__).parent
 PAGES_DIR = BASE_DIR / "pages"
-sys.path.insert(0, str(BASE_DIR.parent.parent))
 
 
 def main():
