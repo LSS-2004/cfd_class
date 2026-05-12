@@ -8,9 +8,14 @@ import base64
 import io
 from typing import Dict, List, Optional, Tuple
 
+import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 import streamlit as st
 from numpy.typing import NDArray
+
+matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
+matplotlib.rcParams['axes.unicode_minus'] = False
 
 
 def render_plot(

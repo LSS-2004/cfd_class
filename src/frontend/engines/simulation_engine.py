@@ -126,13 +126,13 @@ class SimulationEngine:
                 elif "MacCormack" in scheme_name:
                     h += np.random.normal(0, 0.02, len(x)) * h * 0.02
                 elif "Godunov" in scheme_name:
-                    h = np.maximum(h_R * 0.9, h)
+                    h = np.maximum(h_r * 0.9, h)
                 elif "HLL" in scheme_name:
-                    h = np.maximum(h_R * 0.85, h)
+                    h = np.maximum(h_r * 0.85, h)
                 elif "MUSCL" in scheme_name:
                     h += np.random.normal(0, 0.01, len(x)) * h * 0.01
                 
-                h = np.maximum(h_R * 0.5, h)
+                h = np.maximum(h_r * 0.5, h)
                 scheme_result[round(t, 2)] = np.vstack([h, np.zeros_like(h)])
 
             results["schemes"][scheme_name] = scheme_result
@@ -176,7 +176,7 @@ class SimulationEngine:
         return {
             "domain_length": self.config.domain_length,
             "grid_points": self.config.nx,
-            "dam_position": self.config.x_dam,
+            "dam_position": self.config._x_dam,
             "left_depth": self.config.h_l,
             "right_depth": self.config.h_r,
             "gravity": self.config.g,

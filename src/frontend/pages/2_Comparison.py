@@ -47,13 +47,13 @@ def generate_comparison_data(params: Dict, schemes: List[str]):
         elif "MacCormack" in scheme_name:
             h += np.random.normal(0, 0.02, len(x)) * h * 0.02
         elif "Godunov" in scheme_name:
-            h = np.maximum(h_R * 0.9, h)
+            h = np.maximum(h_r * 0.9, h)
         elif "HLL" in scheme_name:
-            h = np.maximum(h_R * 0.85, h)
+            h = np.maximum(h_r * 0.85, h)
         elif "MUSCL" in scheme_name:
             h += np.random.normal(0, 0.01, len(x)) * h * 0.01
         
-        h = np.maximum(h_R * 0.5, h)
+        h = np.maximum(h_r * 0.5, h)
         results["h_results"][scheme_name] = h
         
         l1 = np.sum(np.abs(h - h.mean())) / len(h) * 0.05
@@ -111,20 +111,20 @@ def create_parameter_selection():
     st.sidebar.header("🔧 测试参数")
 
     with st.sidebar.expander("📐 域参数", expanded=True):
-        L = st.number_input("Domain Length L (m)", 1.0, 100.0, 10.0)
+        domain_length = st.number_input("Domain Length (m)", 1.0, 100.0, 10.0)
         nx = st.slider("网格数 nx", 50, 500, 200)
-        h_L = st.number_input("左侧水深 h_L (m)", 0.01, 20.0, 2.0)
-        h_R = st.number_input("右侧水深 h_R (m)", 0.01, 20.0, 1.0)
+        h_l = st.number_input("左侧水深 h_l (m)", 0.01, 20.0, 2.0)
+        h_r = st.number_input("右侧水深 h_r (m)", 0.01, 20.0, 1.0)
         t_end = st.number_input("终止时间 t_end (s)", 0.1, 10.0, 1.0)
 
     return {
-        "L": L,
+        "domain_length": domain_length,
         "nx": nx,
-        "x_dam": L / 2,
-        "h_L": h_L,
-        "h_R": h_R,
-        "u_L": 0.0,
-        "u_R": 0.0,
+        "_x_dam": domain_length / 2,
+        "h_l": h_l,
+        "h_r": h_r,
+        "u_l": 0.0,
+        "u_r": 0.0,
         "g": 9.81,
         "t_end": t_end,
         "cfl": 0.5,
@@ -140,7 +140,11 @@ def plot_scheme_comparison(results: Dict):
     st.subheader("📈 多格式对比图")
 
     try:
+        import matplotlib
         import matplotlib.pyplot as plt
+        
+        matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
+        matplotlib.rcParams['axes.unicode_minus'] = False
 
         fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 

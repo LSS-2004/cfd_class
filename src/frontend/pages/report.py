@@ -195,7 +195,7 @@ def generate_report_html(
                 <tr><th>参数</th><th>值</th></tr>
                 <tr><td>计算域长度</td><td>{params['domain_length']} m</td></tr>
                 <tr><td>网格数量</td><td>{params['nx']}</td></tr>
-                <tr><td>大坝位置</td><td>{params['x_dam']} m</td></tr>
+                <tr><td>大坝位置</td><td>{params['_x_dam']} m</td></tr>
                 <tr><td>左侧水深</td><td>{params['h_l']} m</td></tr>
                 <tr><td>右侧水深</td><td>{params['h_r']} m</td></tr>
                 <tr><td>结束时间</td><td>{params['t_end']} s</td></tr>

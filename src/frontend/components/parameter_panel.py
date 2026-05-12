@@ -17,7 +17,7 @@ PRESETS = {
     "标准溃坝 (B1默认)": {
         "domain_length": 1000.0,
         "nx": 100,
-        "x_dam": 500.0,
+        "_x_dam": 500.0,
         "h_l": 10.0,
         "h_r": 1.0,
         "u_l": 0.0,
@@ -31,7 +31,7 @@ PRESETS = {
     "经典溃坝": {
         "domain_length": 10.0,
         "nx": 200,
-        "x_dam": 5.0,
+        "_x_dam": 5.0,
         "h_l": 2.0,
         "h_r": 1.0,
         "u_l": 0.0,
@@ -45,7 +45,7 @@ PRESETS = {
     "大水深比": {
         "domain_length": 10.0,
         "nx": 200,
-        "x_dam": 5.0,
+        "_x_dam": 5.0,
         "h_l": 5.0,
         "h_r": 1.0,
         "u_l": 0.0,
@@ -59,7 +59,7 @@ PRESETS = {
     "小水深比": {
         "domain_length": 10.0,
         "nx": 200,
-        "x_dam": 5.0,
+        "_x_dam": 5.0,
         "h_l": 1.5,
         "h_r": 1.0,
         "u_l": 0.0,
@@ -73,7 +73,7 @@ PRESETS = {
     "长时模拟": {
         "domain_length": 20.0,
         "nx": 400,
-        "x_dam": 10.0,
+        "_x_dam": 10.0,
         "h_l": 2.0,
         "h_r": 1.0,
         "u_l": 0.0,
@@ -87,7 +87,7 @@ PRESETS = {
     "非零初速": {
         "domain_length": 10.0,
         "nx": 200,
-        "x_dam": 5.0,
+        "_x_dam": 5.0,
         "h_l": 2.0,
         "h_r": 1.0,
         "u_l": 1.0,
@@ -101,7 +101,7 @@ PRESETS = {
     "细网格测试": {
         "domain_length": 10.0,
         "nx": 1000,
-        "x_dam": 5.0,
+        "_x_dam": 5.0,
         "h_l": 2.0,
         "h_r": 1.0,
         "u_l": 0.0,
@@ -355,7 +355,7 @@ def validate_params(params: Dict[str, Any]) -> Dict[str, Any]:
     if params["h_l"] <= 0 or params["h_r"] <= 0:
         errors.append("水深必须大于0")
 
-    if params["x_dam"] < 0 or params["x_dam"] > params["domain_length"]:
+    if params["_x_dam"] < 0 or params["_x_dam"] > params["domain_length"]:
         errors.append("大坝位置必须在域内 [0, domain_length]")
 
     if params["t_end"] <= 0:
@@ -467,7 +467,7 @@ def get_parameter_summary(params: Dict[str, Any]) -> str:
     return f"""
     **计算参数摘要 (DamBreakConfig)**
     - 计算域: [0, {params['domain_length']:.1f}] m, 网格数: {params['nx']}
-    - 大坝位置: {params['x_dam']:.1f} m
+    - 大坝位置: {params['_x_dam']:.1f} m
     - 初始条件: h_l={params['h_l']:.2f}m, h_r={params['h_r']:.2f}m
     - 结束时间: {params['t_end']:.2f}s, CFL: {params['cfl']:.2f}
     - 边界条件: {params.get('boundary_type', 'transmissive')}

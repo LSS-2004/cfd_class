@@ -153,13 +153,13 @@ class ReportEngine:
 """
 
         params = [
-            ("Domain Length", getattr(config, "L", "N/A"), "m"),
+            ("Domain Length", getattr(config, "domain_length", "N/A"), "m"),
             ("Grid Points", getattr(config, "nx", "N/A"), ""),
-            ("Dam Position", getattr(config, "x_dam", "N/A"), "m"),
-            ("Left Depth", getattr(config, "h_L", "N/A"), "m"),
-            ("Right Depth", getattr(config, "h_R", "N/A"), "m"),
-            ("Left Velocity", getattr(config, "u_L", "N/A"), "m/s"),
-            ("Right Velocity", getattr(config, "u_R", "N/A"), "m/s"),
+            ("Dam Position", getattr(config, "_x_dam", "N/A"), "m"),
+            ("Left Depth", getattr(config, "h_l", "N/A"), "m"),
+            ("Right Depth", getattr(config, "h_r", "N/A"), "m"),
+            ("Left Velocity", getattr(config, "u_l", "N/A"), "m/s"),
+            ("Right Velocity", getattr(config, "u_r", "N/A"), "m/s"),
             ("Gravity", getattr(config, "g", "N/A"), "m/s²"),
             ("End Time", getattr(config, "t_end", "N/A"), "s"),
             ("CFL Number", getattr(config, "cfl", "N/A"), ""),

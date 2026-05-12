@@ -32,13 +32,13 @@ class ComparisonEngine:
             Dict[str, Any]: 对比结果
         """
         try:
-            L = params.get("L", params.get("domain_length", 10.0))
+            domain_length = params.get("domain_length", 10.0)
             nx = params.get("nx", 200)
-            h_L = params.get("h_L", params.get("h_l", 2.0))
-            h_R = params.get("h_R", params.get("h_r", 1.0))
+            h_l = params.get("h_l", 2.0)
+            h_r = params.get("h_r", 1.0)
             t_end = params.get("t_end", 1.0)
             
-            x = np.linspace(0, L, nx)
+            x = np.linspace(0, domain_length, nx)
 
             results = {
                 "x": x,
@@ -64,9 +64,9 @@ class ComparisonEngine:
                         sigma = 1.0 + t * 0.5
                         peak_factor = max(0.1, 1 - t / t_end * 0.3)
                         
-                        h = h_R + (h_L - h_R) * (
-                            0.5 * (1 + np.tanh((L/2 - x) / sigma)) * peak_factor +
-                            0.2 * np.exp(-((x - L/2)**2) / (2 * sigma**2))
+                        h = h_r + (h_l - h_r) * (
+                            0.5 * (1 + np.tanh((domain_length/2 - x) / sigma)) * peak_factor +
+                            0.2 * np.exp(-((x - domain_length/2)**2) / (2 * sigma**2))
                         )
                         
                         if "Lax-Friedrichs" in scheme_name:
@@ -76,13 +76,13 @@ class ComparisonEngine:
                         elif "MacCormack" in scheme_name:
                             h += np.random.normal(0, 0.02, len(x)) * h * 0.02
                         elif "Godunov" in scheme_name:
-                            h = np.maximum(h_R * 0.9, h)
+                            h = np.maximum(h_r * 0.9, h)
                         elif "HLL" in scheme_name:
-                            h = np.maximum(h_R * 0.85, h)
+                            h = np.maximum(h_r * 0.85, h)
                         elif "MUSCL" in scheme_name:
                             h += np.random.normal(0, 0.01, len(x)) * h * 0.01
                         
-                        h = np.maximum(h_R * 0.5, h)
+                        h = np.maximum(h_r * 0.5, h)
                         scheme_result[round(t, 2)] = np.vstack([h, np.zeros_like(h)])
 
                     end_time = time.time()
