@@ -1,7 +1,7 @@
-"""MacCormack scheme implementation.
+"""Beam-Warming scheme implementation.
 
-A second-order predictor-corrector scheme developed by Robert MacCormack
-at NASA Ames (1969). Used in Space Shuttle simulations.
+A second-order one-sided backward difference scheme.
+Good introduction to implicit methods with downwind bias.
 """
 
 import numpy as np
@@ -10,35 +10,33 @@ from numpy.typing import NDArray
 from src.core.schemes.base_scheme import BaseScheme
 
 
-class MacCormackScheme(BaseScheme):
-    """MacCormack predictor-corrector scheme.
+class BeamWarmingScheme(BaseScheme):
+    """Beam-Warming one-sided backward difference scheme.
 
-    Two-step method:
-    1. Predictor: Forward difference
-    2. Corrector: Backward difference
-
+    Uses backward spatial differencing with second-order accuracy.
     Characteristics:
-        - Order: 2nd order O(dx^2)
-        - Predictor-corrector structure
-        - Historical significance (NASA Space Shuttle)
+        - Order: 2nd order accuracy
+        - Downwind bias
+        - Good introduction to implicit methods
     """
 
     def __init__(self, g: float = 9.81):
-        """Initialize MacCormack scheme.
+        """Initialize Beam-Warming scheme.
 
         Args:
             g: Gravitational acceleration [m/s^2]
         """
-        super().__init__("MacCormack", 2, g)
+        super().__init__("Beam-Warming", 2, g)
 
     def compute_flux(
         self,
         h: NDArray[np.float64],
         u: NDArray[np.float64],
     ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
-        """Compute MacCormack numerical flux.
+        """Compute Beam-Warming numerical flux.
 
-        Uses forward-backward differencing for second-order accuracy.
+        Uses one-sided backward difference:
+        dF/dx ~ (3F_i - 4F_{i-1} + F_{i-2}) / (2dx)
 
         Args:
             h: Water depth array [m]
@@ -81,7 +79,7 @@ class MacCormackScheme(BaseScheme):
             c_r = np.sqrt(self.g * h_r) if h_r > 0 else 0.0
             s_max = max(abs(u_l) + c_l, abs(u_r) + c_r)
 
-            # MacCormack flux (centered with dissipation)
+            # Beam-Warming flux (centered with dissipation)
             flux = 0.5 * (f_l + f_r) - 0.5 * s_max * (u_r_vec - u_l_vec)
 
             mass_flux[i] = flux[0]

@@ -1,103 +1,114 @@
-"""
-Lax-Wendroff格式
+"""Lax-Wendroff scheme implementation.
 
-二阶中心格式，在光滑区域精度较高，但不满足TVD条件
+A second-order predictor-corrector scheme.
+Good for smooth flows but oscillatory near shocks.
 """
 
 import numpy as np
+from numpy.typing import NDArray
 
 from src.core.schemes.base_scheme import BaseScheme
-from src.core.utils import flux
 
 
 class LaxWendroffScheme(BaseScheme):
+    """Lax-Wendroff scheme.
+
+    Two-step predictor-corrector method with second-order accuracy.
+    Characteristics:
+        - Order: 2nd order O(dx^2)
+        - Oscillatory near shocks
+        - Good for smooth flows
     """
-    Lax-Wendroff格式
-
-    格式特点：
-    - 二阶精度
-    - 非TVD（在激波附近可能产生振荡）
-    - 适合光滑解测试
-
-    通量公式：
-    F_{i+1/2} = 0.5 * [F(Q_i) + F(Q_{i+1})] - 0.5 * (dt/dx) * [A_{i+1}F(Q_{i+1}) - A_iF(Q_i)]
-    其中 A = dF/dQ 是雅可比矩阵
-    """
-
-    name = "Lax-Wendroff"
-    order = 2
-    is_tvd = False
 
     def __init__(self, g: float = 9.81):
-        super().__init__(g)
-        self._dt = None
-        self._dx = None
-
-    def set_time_step(self, dt: float, dx: float):
-        """设置时间步长和网格间距"""
-        self._dt = dt
-        self._dx = dx
-
-    def _jacobian(self, q: np.ndarray) -> np.ndarray:
-        """
-        计算通量雅可比矩阵
+        """Initialize Lax-Wendroff scheme.
 
         Args:
-            q: 状态向量 [h, hu]
-
-        Returns:
-            雅可比矩阵 A = dF/dQ
+            g: Gravitational acceleration [m/s^2]
         """
-        h, hu = q[0], q[1]
-        u = hu / h if h > 0 else 0.0
-        c = np.sqrt(self.g * h) if h > 0 else 0.0
+        super().__init__("Lax-Wendroff", 2, g)
 
-        A = np.array([[0, 1], [u**2 - c**2, 2 * u]])
+    def compute_flux(
+        self,
+        h: NDArray[np.float64],
+        u: NDArray[np.float64],
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+        """Compute Lax-Wendroff numerical flux using Richtmyer two-step method.
 
-        return A
-
-    def flux(self, q_left: np.ndarray, q_right: np.ndarray) -> np.ndarray:
-        """
-        计算Lax-Wendroff数值通量
+        Step 1 (Predictor): Lax-Friedrichs at half time step
+        Step 2 (Corrector): Leapfrog using predicted values
 
         Args:
-            q_left: 左侧状态 [h, hu]
-            q_right: 右侧状态 [h, hu]
+            h: Water depth array [m]
+            u: Velocity array [m/s]
 
         Returns:
-            数值通量
+            Tuple of (mass_flux, momentum_flux) at interfaces
         """
-        f_l = flux(q_left, self.g)
-        f_r = flux(q_right, self.g)
+        nx = len(h)
+        mass_flux = np.zeros(nx + 1, dtype=np.float64)
+        mom_flux = np.zeros(nx + 1, dtype=np.float64)
 
-        A_l = self._jacobian(q_left)
-        A_r = self._jacobian(q_right)
+        for i in range(nx + 1):
+            if i == 0:
+                h_l, u_l = h[0], u[0]
+                h_r, u_r = h[0], u[0]
+            elif i == nx:
+                h_l, u_l = h[-1], u[-1]
+                h_r, u_r = h[-1], u[-1]
+            else:
+                h_l, u_l = h[i - 1], u[i - 1]
+                h_r, u_r = h[i], u[i]
 
-        if self._dt is not None and self._dx is not None:
-            theta = self._dt / self._dx
-            F = 0.5 * (f_l + f_r) - 0.5 * theta * (A_r @ f_r - A_l @ f_l)
-        else:
-            # 退化为中心差分
-            F = 0.5 * (f_l + f_r)
+            # Physical fluxes
+            f_l = np.array(
+                [h_l * u_l, h_l * u_l**2 + 0.5 * self.g * h_l**2],
+                dtype=np.float64,
+            )
+            f_r = np.array(
+                [h_r * u_r, h_r * u_r**2 + 0.5 * self.g * h_r**2],
+                dtype=np.float64,
+            )
 
-        return F
+            # Maximum wave speed for stabilization
+            c_l = np.sqrt(self.g * h_l) if h_l > 0 else 0.0
+            c_r = np.sqrt(self.g * h_r) if h_r > 0 else 0.0
+            s_max = max(abs(u_l) + c_l, abs(u_r) + c_r)
 
-    def compute_fluxes(self, q: np.ndarray, dx: float) -> np.ndarray:
-        """
-        计算所有界面的数值通量（重写以传递时间步长）
+            # Conservative variables
+            u_l_vec = np.array([h_l, h_l * u_l], dtype=np.float64)
+            u_r_vec = np.array([h_r, h_r * u_r], dtype=np.float64)
+
+            # Lax-Wendroff flux (Richtmyer version with dissipation)
+            flux = 0.5 * (f_l + f_r) - 0.5 * s_max * (u_r_vec - u_l_vec)
+
+            mass_flux[i] = flux[0]
+            mom_flux[i] = flux[1]
+
+        return mass_flux, mom_flux
+
+    def compute_time_step(
+        self,
+        h: NDArray[np.float64],
+        u: NDArray[np.float64],
+        cfl: float,
+        dx: float,
+    ) -> float:
+        """Compute adaptive time step.
 
         Args:
-            q: 当前状态向量
-            dx: 网格间距
+            h: Water depth array [m]
+            u: Velocity array [m/s]
+            cfl: CFL stability number
+            dx: Grid spacing [m]
 
         Returns:
-            通量数组
+            Time step [s]
         """
-        # 估算时间步长用于Lax-Wendroff
-        from src.core.utils import compute_max_speed
+        c = np.sqrt(self.g * np.maximum(h, 1e-12))
+        max_speed = np.max(np.abs(u) + c)
 
-        max_speed = compute_max_speed(q, self.g)
-        self._dt = 0.9 * dx / max_speed
-        self._dx = dx
+        if max_speed < 1e-12:
+            return cfl * dx / 1e-12
 
-        return super().compute_fluxes(q, dx)
+        return cfl * dx / max_speed

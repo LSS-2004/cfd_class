@@ -1,61 +1,112 @@
-"""
-Lax-Friedrichs格式
+"""Lax-Friedrichs scheme implementation.
 
-一阶稳定格式，具有强稳定性，作为基准对比格式
+A first-order centered scheme with numerical diffusion.
+More isotropic diffusion compared to upwind scheme.
 """
 
 import numpy as np
+from numpy.typing import NDArray
 
 from src.core.schemes.base_scheme import BaseScheme
-from src.core.utils import flux
 
 
 class LaxFriedrichsScheme(BaseScheme):
-    """
-    Lax-Friedrichs格式
+    """Lax-Friedrichs scheme.
 
-    格式特点：
-    - 一阶精度
-    - TVD稳定
-    - 数值耗散较大
-    - 适合作为基准对比
-
-    通量公式：
-    F_{i+1/2} = 0.5 * [F(Q_i) + F(Q_{i+1})] - 0.5 * alpha * (Q_{i+1} - Q_i)
-    其中 alpha = max|特征速度|
+    Uses centered averaging with global maximum wave speed for diffusion.
+    Characteristics:
+        - Order: 1st order O(dx)
+        - Centered diffusion (more isotropic than upwind)
+        - CFL <= 1.0
     """
 
-    name = "Lax-Friedrichs"
-    order = 1
-    is_tvd = True
-
-    def flux(self, q_left: np.ndarray, q_right: np.ndarray) -> np.ndarray:
-        """
-        计算Lax-Friedrichs数值通量
+    def __init__(self, g: float = 9.81):
+        """Initialize Lax-Friedrichs scheme.
 
         Args:
-            q_left: 左侧状态 [h, hu]
-            q_right: 右侧状态 [h, hu]
+            g: Gravitational acceleration [m/s^2]
+        """
+        super().__init__("Lax-Friedrichs", 1, g)
+
+    def compute_flux(
+        self,
+        h: NDArray[np.float64],
+        u: NDArray[np.float64],
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+        """Compute Lax-Friedrichs numerical flux.
+
+        Uses global maximum wave speed for diffusion (not local like Rusanov).
+
+        Args:
+            h: Water depth array [m]
+            u: Velocity array [m/s]
 
         Returns:
-            数值通量
+            Tuple of (mass_flux, momentum_flux) at interfaces
         """
-        h_l, hu_l = q_left[0], q_left[1]
-        h_r, hu_r = q_right[0], q_right[1]
+        nx = len(h)
+        mass_flux = np.zeros(nx + 1, dtype=np.float64)
+        mom_flux = np.zeros(nx + 1, dtype=np.float64)
 
-        u_l = hu_l / h_l if h_l > 0 else 0.0
-        u_r = hu_r / h_r if h_r > 0 else 0.0
+        # Global maximum wave speed (Lax-Friedrichs uses global, not local)
+        c = np.sqrt(self.g * np.maximum(h, 1e-12))
+        s_max = np.max(np.abs(u) + c)
 
-        # 计算左右通量
-        f_l = flux(q_left, self.g)
-        f_r = flux(q_right, self.g)
+        for i in range(nx + 1):
+            if i == 0:
+                h_l, u_l = h[0], u[0]
+                h_r, u_r = h[0], u[0]
+            elif i == nx:
+                h_l, u_l = h[-1], u[-1]
+                h_r, u_r = h[-1], u[-1]
+            else:
+                h_l, u_l = h[i - 1], u[i - 1]
+                h_r, u_r = h[i], u[i]
 
-        # 计算最大特征速度
-        c_l = np.sqrt(self.g * np.maximum(h_l, 0))
-        c_r = np.sqrt(self.g * np.maximum(h_r, 0))
-        alpha = max(np.abs(u_l) + c_l, np.abs(u_r) + c_r)
+            # Physical fluxes
+            f_l = np.array(
+                [h_l * u_l, h_l * u_l**2 + 0.5 * self.g * h_l**2],
+                dtype=np.float64,
+            )
+            f_r = np.array(
+                [h_r * u_r, h_r * u_r**2 + 0.5 * self.g * h_r**2],
+                dtype=np.float64,
+            )
 
-        # Lax-Friedrichs通量
-        F = 0.5 * (f_l + f_r) - 0.5 * alpha * (q_right - q_left)
+            # Conservative variables
+            u_l_vec = np.array([h_l, h_l * u_l], dtype=np.float64)
+            u_r_vec = np.array([h_r, h_r * u_r], dtype=np.float64)
 
-        return F
+            # Lax-Friedrichs flux with global wave speed
+            flux = 0.5 * (f_l + f_r) - 0.5 * s_max * (u_r_vec - u_l_vec)
+
+            mass_flux[i] = flux[0]
+            mom_flux[i] = flux[1]
+
+        return mass_flux, mom_flux
+
+    def compute_time_step(
+        self,
+        h: NDArray[np.float64],
+        u: NDArray[np.float64],
+        cfl: float,
+        dx: float,
+    ) -> float:
+        """Compute adaptive time step.
+
+        Args:
+            h: Water depth array [m]
+            u: Velocity array [m/s]
+            cfl: CFL stability number
+            dx: Grid spacing [m]
+
+        Returns:
+            Time step [s]
+        """
+        c = np.sqrt(self.g * np.maximum(h, 1e-12))
+        max_speed = np.max(np.abs(u) + c)
+
+        if max_speed < 1e-12:
+            return cfl * dx / 1e-12
+
+        return cfl * dx / max_speed

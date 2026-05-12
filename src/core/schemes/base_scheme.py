@@ -1,195 +1,236 @@
-"""
-数值格式基类
+"""Abstract base class for finite volume schemes.
 
-定义所有FVM格式的公共接口和功能
+Provides the template method pattern for all numerical schemes,
+ensuring consistent structure and interface across implementations.
 """
 
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, Optional
+from typing import Dict, Optional, Callable
 
 import numpy as np
+from numpy.typing import NDArray
 
-from src.core.config import DamBreakConfig
-from src.core.utils import apply_boundary_conditions, compute_max_speed, positivity_fix
+
+class SimulationResult:
+    """Container for simulation results.
+
+    Attributes:
+        t: Time array [s]
+        h: Water depth history [m]
+        u: Velocity history [m/s]
+        snapshots: Dictionary of {time: (h, u)} for specific times
+    """
+
+    def __init__(
+        self,
+        t: NDArray[np.float64],
+        h: NDArray[np.float64],
+        u: NDArray[np.float64],
+        snapshots: Optional[Dict[float, tuple]] = None,
+    ):
+        self.t = t
+        self.h = h
+        self.u = u
+        self.snapshots = snapshots or {}
 
 
 class BaseScheme(ABC):
+    """Abstract base class for all FVM schemes.
+
+    Defines the common interface that all numerical schemes must implement.
+    Uses the Template Method pattern to enforce consistent structure.
+
+    Attributes:
+        name: Scheme name
+        order: Spatial accuracy order
+        g: Gravitational acceleration [m/s^2]
     """
-    有限体积法数值格式基类
 
-    所有具体格式都必须实现 flux 方法
-    """
-
-    name: str = "BaseScheme"
-    order: int = 1
-    is_tvd: bool = False
-
-    def __init__(self, g: float = 9.81):
-        """
-        初始化数值格式
+    def __init__(self, name: str, order: int, g: float = 9.81):
+        """Initialize scheme.
 
         Args:
-            g: 重力加速度
+            name: Scheme name
+            order: Spatial accuracy order (1 or 2)
+            g: Gravitational acceleration [m/s^2]
         """
+        self.name = name
+        self.order = order
         self.g = g
 
     @abstractmethod
-    def flux(self, q_left: np.ndarray, q_right: np.ndarray) -> np.ndarray:
-        """
-        计算数值通量
+    def compute_flux(
+        self,
+        h: NDArray[np.float64],
+        u: NDArray[np.float64],
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+        """Compute numerical flux at cell interfaces.
 
         Args:
-            q_left: 左侧状态 [h, hu]
-            q_right: 右侧状态 [h, hu]
+            h: Water depth array [m]
+            u: Velocity array [m/s]
 
         Returns:
-            数值通量
+            Tuple of (mass_flux, momentum_flux) at interfaces
         """
         pass
 
-    def evolve(
+    @abstractmethod
+    def compute_time_step(
         self,
-        config: DamBreakConfig,
-        progress_callback: Optional[Callable[[float], None]] = None,
-    ) -> Dict[float, np.ndarray]:
-        """
-        时间演化主函数
+        h: NDArray[np.float64],
+        u: NDArray[np.float64],
+        cfl: float,
+        dx: float,
+    ) -> float:
+        """Compute adaptive time step based on CFL condition.
 
         Args:
-            config: 溃坝问题配置
-            progress_callback: 进度回调函数
+            h: Water depth array [m]
+            u: Velocity array [m/s]
+            cfl: CFL stability number
+            dx: Grid spacing [m]
 
         Returns:
-            快照字典 {时间: 状态向量}
+            Time step [s]
         """
-        q = config.q_initial.copy()
-        dx = config.dx
-        cfl = config.cfl
-        t_end = config.t_end
+        pass
 
+    def apply_boundary_conditions(
+        self,
+        h: NDArray[np.float64],
+        u: NDArray[np.float64],
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+        """Apply transmissive boundary conditions.
+
+        Args:
+            h: Water depth array [m]
+            u: Velocity array [m/s]
+
+        Returns:
+            Tuple of (h, u) with boundary conditions applied
+        """
+        h_bc = h.copy()
+        u_bc = u.copy()
+
+        # Transmissive (zero-gradient) boundaries
+        if len(h) > 1:
+            h_bc[0] = h[1]
+            h_bc[-1] = h[-2]
+            u_bc[0] = u[1]
+            u_bc[-1] = u[-2]
+
+        return h_bc, u_bc
+
+    def advance(
+        self,
+        h: NDArray[np.float64],
+        u: NDArray[np.float64],
+        dt: float,
+        dx: float,
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+        """Advance solution by one time step.
+
+        Template method that calls compute_flux and updates conserved variables.
+
+        Args:
+            h: Current water depth [m]
+            u: Current velocity [m/s]
+            dt: Time step [s]
+            dx: Grid spacing [m]
+
+        Returns:
+            Tuple of (h_new, u_new) at next time level
+        """
+        # Compute fluxes
+        mass_flux, mom_flux = self.compute_flux(h, u)
+
+        # Update conserved variables
+        h_new = h - dt / dx * (mass_flux[1:] - mass_flux[:-1])
+        hu = h * u
+        hu_new = hu - dt / dx * (mom_flux[1:] - mom_flux[:-1])
+
+        # Positivity preservation
+        eps_h = 1e-12
+        h_new = np.maximum(h_new, eps_h)
+
+        # Compute velocity
+        u_new = np.where(h_new > eps_h, hu_new / h_new, 0.0)
+
+        # Apply boundary conditions
+        h_new, u_new = self.apply_boundary_conditions(h_new, u_new)
+
+        return h_new, u_new
+
+    def run_simulation(
+        self,
+        h0: NDArray[np.float64],
+        u0: NDArray[np.float64],
+        cfl: float,
+        dx: float,
+        t_end: float,
+        progress_callback: Optional[Callable[[float], None]] = None,
+        snapshot_times: Optional[list] = None,
+    ) -> SimulationResult:
+        """Run full simulation from t=0 to t=t_end.
+
+        Args:
+            h0: Initial water depth [m]
+            u0: Initial velocity [m/s]
+            cfl: CFL stability number
+            dx: Grid spacing [m]
+            t_end: End time [s]
+            progress_callback: Optional callback(t) for progress reporting
+            snapshot_times: Optional list of times to save snapshots
+
+        Returns:
+            SimulationResult with full time history
+        """
+        h = h0.copy()
+        u = u0.copy()
         t = 0.0
-        snapshots = {t: q.copy()}
 
-        if config.snapshot_times is not None:
-            snapshot_times = sorted(set([0.0, t_end] + config.snapshot_times))
-            next_snapshot_idx = 1
-        else:
-            snapshot_times = None
+        # Storage
+        t_history = [t]
+        h_history = [h.copy()]
+        u_history = [u.copy()]
+        snapshots = {}
+
+        if snapshot_times:
+            snapshot_times = sorted(snapshot_times)
+            next_snapshot_idx = 0
 
         while t < t_end:
-            # 计算时间步长
-            max_speed = compute_max_speed(q, self.g)
-            dt = min(cfl * dx / max_speed, t_end - t)
+            # Compute time step
+            dt = self.compute_time_step(h, u, cfl, dx)
 
-            if dt <= 0:
-                break
+            # Don't overshoot t_end
+            if t + dt > t_end:
+                dt = t_end - t
 
-            # 计算通量
-            F = self.compute_fluxes(q, dx)
-
-            # 更新状态
-            q_new = q - (dt / dx) * (F[:, 1:] - F[:, :-1])
-
-            # 应用边界条件
-            q_new = apply_boundary_conditions(q_new, config.boundary_type)
-
-            # 正性保持
-            q_new = positivity_fix(q_new)
-
-            q = q_new
+            # Advance
+            h, u = self.advance(h, u, dt, dx)
             t += dt
 
-            # 记录快照
-            if snapshot_times is not None and next_snapshot_idx < len(snapshot_times):
-                while (
-                    next_snapshot_idx < len(snapshot_times)
-                    and t >= snapshot_times[next_snapshot_idx]
-                ):
-                    snapshots[snapshot_times[next_snapshot_idx]] = q.copy()
-                    next_snapshot_idx += 1
-            else:
-                # 每10步记录一次
-                if int(t / dt) % 10 == 0:
-                    snapshots[t] = q.copy()
+            # Store
+            t_history.append(t)
+            h_history.append(h.copy())
+            u_history.append(u.copy())
 
-            # 进度回调
-            if progress_callback is not None:
+            # Save snapshots
+            if snapshot_times and next_snapshot_idx < len(snapshot_times):
+                if t >= snapshot_times[next_snapshot_idx]:
+                    st = snapshot_times[next_snapshot_idx]
+                    snapshots[st] = (h.copy(), u.copy())
+                    next_snapshot_idx += 1
+
+            # Progress callback
+            if progress_callback:
                 progress_callback(t / t_end)
 
-        # 确保记录最终时刻
-        if t not in snapshots:
-            snapshots[t] = q.copy()
-
-        return snapshots
-
-    def compute_fluxes(self, q: np.ndarray, dx: float) -> np.ndarray:
-        """
-        计算所有界面的数值通量
-
-        Args:
-            q: 当前状态向量
-            dx: 网格间距
-
-        Returns:
-            通量数组，形状为 (2, nx+1)
-        """
-        nx = q.shape[1]
-        F = np.zeros((2, nx + 1))
-
-        # 边界外推
-        q_extended = np.zeros((2, nx + 2))
-        q_extended[:, 1:-1] = q
-        q_extended[:, 0] = q[:, 0]
-        q_extended[:, -1] = q[:, -1]
-
-        # 计算内部通量
-        for i in range(nx + 1):
-            q_left = q_extended[:, i]
-            q_right = q_extended[:, i + 1]
-            F[:, i] = self.flux(q_left, q_right)
-
-        return F
-
-
-def get_scheme(name: str) -> BaseScheme:
-    """
-    根据名称获取数值格式实例
-
-    Args:
-        name: 格式名称
-
-    Returns:
-        数值格式实例
-    """
-    from src.core.schemes.godunov import GodunovScheme
-    from src.core.schemes.hll import HLLScheme
-    from src.core.schemes.lax_friedrichs import LaxFriedrichsScheme
-    from src.core.schemes.lax_wendroff import LaxWendroffScheme
-    from src.core.schemes.maccormack import MacCormackScheme
-    from src.core.schemes.muscl import MUSCLScheme
-
-    schemes = {
-        "Lax-Friedrichs": LaxFriedrichsScheme,
-        "Lax-Wendroff": LaxWendroffScheme,
-        "MacCormack": MacCormackScheme,
-        "Godunov": GodunovScheme,
-        "HLL": HLLScheme,
-        "MUSCL-Hancock": MUSCLScheme,
-    }
-
-    if name not in schemes:
-        raise ValueError(f"未知的数值格式: {name}")
-
-    return schemes[name]()
-
-
-def get_all_schemes() -> list:
-    """获取所有可用格式列表"""
-    return [
-        "Lax-Friedrichs",
-        "Lax-Wendroff",
-        "MacCormack",
-        "Godunov",
-        "HLL",
-        "MUSCL-Hancock",
-    ]
+        return SimulationResult(
+            t=np.array(t_history, dtype=np.float64),
+            h=np.array(h_history, dtype=np.float64),
+            u=np.array(u_history, dtype=np.float64),
+            snapshots=snapshots,
+        )
