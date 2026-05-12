@@ -5,6 +5,7 @@ import pytest
 
 from src.core.schemes.upwind import UpwindScheme
 from src.core.schemes.lax_friedrichs import LaxFriedrichsScheme
+from src.core.schemes.hll import HLLScheme
 from src.core.schemes.lax_wendroff import LaxWendroffScheme
 from src.core.schemes.maccormack import MacCormackScheme
 from src.core.schemes.beam_warming import BeamWarmingScheme
@@ -153,6 +154,26 @@ class TestFrommScheme:
         assert np.all(h_new > 0)
 
 
+class TestHLLScheme:
+    """Test suite for HLLScheme."""
+
+    def test_init(self):
+        """Test scheme initialization."""
+        scheme = HLLScheme()
+        assert scheme.name == "HLL"
+        assert scheme.order == 1
+
+    def test_advance(self):
+        """Test single time step advancement."""
+        scheme = HLLScheme()
+        h = np.ones(10)
+        h[:5] = 2.0
+        u = np.zeros(10)
+        h_new, u_new = scheme.advance(h, u, 0.01, 0.1)
+        assert len(h_new) == 10
+        assert np.all(h_new > 0)
+
+
 class TestGodunovScheme:
     """Test suite for GodunovScheme."""
 
@@ -213,6 +234,7 @@ class TestAllSchemes:
         return [
             UpwindScheme(),
             LaxFriedrichsScheme(),
+            HLLScheme(),
             LaxWendroffScheme(),
             MacCormackScheme(),
             BeamWarmingScheme(),

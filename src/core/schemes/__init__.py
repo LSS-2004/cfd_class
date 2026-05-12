@@ -4,6 +4,7 @@
 Supported schemes:
 - First-Order Upwind: Robust but diffusive
 - Lax-Friedrichs: Centered diffusion
+- HLL: Approximate Riemann solver
 - Lax-Wendroff: Second-order predictor-corrector
 - MacCormack: NASA predictor-corrector
 - Beam-Warming: One-sided backward difference
@@ -15,6 +16,7 @@ Supported schemes:
 from src.core.schemes.base_scheme import BaseScheme, SimulationResult
 from src.core.schemes.upwind import UpwindScheme
 from src.core.schemes.lax_friedrichs import LaxFriedrichsScheme
+from src.core.schemes.hll import HLLScheme
 from src.core.schemes.lax_wendroff import LaxWendroffScheme
 from src.core.schemes.maccormack import MacCormackScheme
 from src.core.schemes.beam_warming import BeamWarmingScheme
@@ -27,6 +29,7 @@ __all__ = [
     "SimulationResult",
     "UpwindScheme",
     "LaxFriedrichsScheme",
+    "HLLScheme",
     "LaxWendroffScheme",
     "MacCormackScheme",
     "BeamWarmingScheme",
