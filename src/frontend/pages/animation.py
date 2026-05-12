@@ -24,7 +24,7 @@ def main():
     with st.sidebar.expander("📐 物理参数", expanded=True):
         domain_length = st.number_input("计算域长度 [m]", 100.0, 5000.0, 1000.0, 100.0)
         nx = st.number_input("网格数量", 10, 5000, 100, 10)
-        x_dam = st.slider("大坝位置 [m]", 0.0, domain_length, domain_length / 2, 10.0)
+        _x_dam = st.slider("大坝位置 [m]", 0.0, domain_length, domain_length / 2, 10.0)
         h_l = st.number_input("左侧水深 h_l [m]", 0.001, 100.0, 10.0, 0.1)
         h_r = st.number_input("右侧水深 h_r [m]", 0.001, 100.0, 1.0, 0.1)
 
@@ -60,7 +60,7 @@ def main():
                     config = DamBreakConfig(
                         domain_length=domain_length,
                         nx=nx,
-                        x_dam=x_dam,
+                        _x_dam=_x_dam,
                         h_l=h_l,
                         h_r=h_r,
                         t_end=t_end,
