@@ -88,13 +88,13 @@ class SimulationEngine:
 
     def _fallback_simulation(self, params: Dict[str, Any], schemes: list) -> Dict[str, Any]:
         """备用模拟（当后端不可用时）"""
-        L = params.get("domain_length", 10.0)
+        domain_length = params.get("domain_length", 10.0)
         nx = params.get("nx", 100)
-        h_L = params.get("h_l", 2.0)
-        h_R = params.get("h_r", 1.0)
+        h_l = params.get("h_l", 2.0)
+        h_r = params.get("h_r", 1.0)
         t_end = params.get("t_end", 1.0)
         
-        x = np.linspace(0, L, nx)
+        x = np.linspace(0, domain_length, nx)
 
         results = {
             "x": x,
@@ -114,9 +114,9 @@ class SimulationEngine:
                 sigma = 1.0 + t * 0.5
                 peak_factor = max(0.1, 1 - t / t_end * 0.3)
                 
-                h = h_R + (h_L - h_R) * (
-                    0.5 * (1 + np.tanh((L/2 - x) / sigma)) * peak_factor +
-                    0.2 * np.exp(-((x - L/2)**2) / (2 * sigma**2))
+                h = h_r + (h_l - h_r) * (
+                    0.5 * (1 + np.tanh((domain_length/2 - x) / sigma)) * peak_factor +
+                    0.2 * np.exp(-((x - domain_length/2)**2) / (2 * sigma**2))
                 )
                 
                 if "Lax-Friedrichs" in scheme_name:

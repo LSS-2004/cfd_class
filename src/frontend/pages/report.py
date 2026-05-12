@@ -99,12 +99,11 @@ def main():
     params = {
         "domain_length": domain_length,
         "nx": nx,
-        "x_dam": x_dam,
+        "_x_dam": x_dam,
         "h_l": h_l,
         "h_r": h_r,
         "t_end": t_end,
         "cfl": cfl,
-        "schemes": selected_schemes,
     }
 
     # 参数摘要

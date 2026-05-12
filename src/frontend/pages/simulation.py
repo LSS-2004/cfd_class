@@ -122,6 +122,7 @@ def main():
     params = {
         "domain_length": domain_length,
         "nx": nx,
+        "_x_dam": domain_length / 2,
         "h_l": h_l,
         "h_r": h_r,
         "u_l": u_l,
@@ -130,7 +131,6 @@ def main():
         "t_end": t_end,
         "cfl": cfl,
         "boundary_type": boundary_type,
-        "schemes": selected_schemes,
     }
 
     # 参数摘要

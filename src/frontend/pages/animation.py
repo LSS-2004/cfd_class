@@ -101,10 +101,10 @@ def main():
                     params = {
                         "domain_length": domain_length,
                         "nx": nx,
+                        "_x_dam": domain_length / 2,
                         "h_l": h_l,
                         "h_r": h_r,
                         "t_end": t_end,
-                        "scheme": scheme,
                     }
                     
                     data = generate_animation_data(params)
