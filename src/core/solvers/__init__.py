@@ -6,7 +6,7 @@ Riemann求解器包
 - HLL近似Riemann通量计算
 """
 
-from src.core.solvers.exact import ExactRiemannSolver, RiemannState
+from src.core.solvers.exact import ExactRiemannSolver, RiemannState, ExactRiemann
 from src.core.solvers.hll import HLLSolver
 
-__all__ = ["ExactRiemannSolver", "RiemannState", "HLLSolver"]
+__all__ = ["ExactRiemannSolver", "RiemannState", "HLLSolver", "ExactRiemann"]

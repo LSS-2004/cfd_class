@@ -14,6 +14,4 @@ CFD-Class Frontend Pages Module
 __version__ = "0.1.0"
 __author__ = "CFD-Team"
 
-from .pages import *
-
 __all__ = ["__version__", "__author__"]

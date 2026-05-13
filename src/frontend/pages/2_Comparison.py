@@ -97,9 +97,7 @@ def plot_scheme_comparison(results: Dict):
 
             if len(h_data) == 0:
                 continue
-            final_h = (
-                h_data[-1] if hasattr(h_data, "__len__") and len(h_data) > 0 else h_data
-            )
+            final_h = np.asarray(h_data).flatten()
 
             axes[0, 0].plot(x, final_h, label=scheme_name, color=color, linewidth=2)
             axes[0, 1].plot(x, final_h, label=scheme_name, color=color, linewidth=2)

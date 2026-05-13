@@ -41,17 +41,20 @@ def test_schemes():
 def test_riemann_solver():
     """测试Riemann求解器"""
     print('3. 测试Riemann求解器')
-    from src.core.solvers import exact_riemann_solution
+    from src.core.solvers import ExactRiemann, ExactRiemannSolver
     
-    q_left = [10.0, 0.0]
-    q_right = [1.0, 0.0]
+    # 测试ExactRiemannSolver
+    solver = ExactRiemannSolver()
+    state = solver.solve(h_l=10.0, u_l=0.0, h_r=1.0, u_r=0.0)
+    print('   星区水深: %.4fm' % state.h)
+    print('   星区速度: %.4fm/s' % state.u)
+    print('   波速: (S_l=%.4f, S_r=%.4f, S_star=%.4f)' % state.wave_speeds)
     
-    sol = exact_riemann_solution(q_left, q_right)
-    print('   解类型: %s' % sol["type"])
-    print('   星区水深: %.4fm' % sol["h_star"])
-    print('   星区速度: %.4fm/s' % sol["u_star"])
-    print('   左波速: %.4fm/s' % sol["s_l"])
-    print('   右波速: %.4fm/s' % sol["s_r"])
+    # 测试ExactRiemann适配器
+    config = DamBreakConfig(nx=100, domain_length=100.0, x_dam=50.0, h_l=10.0, h_r=1.0, t_end=1.0)
+    exact = ExactRiemann(config)
+    result = exact.solve(config)
+    print('   ExactRiemann解形状: %s' % str(result.shape))
     print('   OK Riemann求解器正常')
 
 

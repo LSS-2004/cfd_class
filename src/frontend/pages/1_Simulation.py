@@ -128,13 +128,13 @@ def create_parameter_panel() -> Dict[str, Any]:
         )
 
     return {
-        "L": L,
+        "domain_length": L,
         "nx": nx,
         "x_dam": x_dam,
-        "h_L": h_L,
-        "h_R": h_R,
-        "u_L": u_L,
-        "u_R": u_R,
+        "h_l": h_L,
+        "h_r": h_R,
+        "u_l": u_L,
+        "u_r": u_R,
         "g": g,
         "t_end": t_end,
         "cfl": cfl,
