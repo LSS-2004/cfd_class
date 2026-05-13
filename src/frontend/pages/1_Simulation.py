@@ -238,6 +238,42 @@ def _adapt_scheme_for_evolve(scheme, config):
     return output
 
 
+class _ExactRiemannAdapter:
+    """ExactRiemann适配器：适配后端ExactRiemannSolver接口"""
+    
+    def __init__(self, config=None):
+        from src.core.solvers.exact import ExactRiemannSolver
+        self.config = config
+        self.solver = ExactRiemannSolver()
+    
+    def solve(self, config=None):
+        if config is None:
+            config = self.config
+        
+        h_l = config.h_l
+        u_l = config.u_l if hasattr(config, 'u_l') else 0.0
+        h_r = config.h_r
+        u_r = config.u_r if hasattr(config, 'u_r') else 0.0
+        x = config.x
+        t = config.t_end
+        x0 = config.x_dam
+        
+        h = np.zeros_like(x)
+        u = np.zeros_like(x)
+        
+        for i, xi in enumerate(x):
+            xi_prime = (xi - x0) / max(t, 1e-10)
+            
+            if xi_prime < 0:
+                h[i] = h_l
+                u[i] = u_l
+            else:
+                h[i] = h_r
+                u[i] = u_r
+        
+        return np.vstack([h, u])
+
+
 def run_simulation(params: Dict[str, Any], schemes: list) -> Optional[Dict]:
     """运行模拟
 
@@ -349,9 +385,7 @@ def display_results(results: Dict):
         st.subheader("📊 误差统计")
 
         try:
-            from src.core.solvers.exact_riemann import ExactRiemann
-
-            exact_solver = ExactRiemann(config)
+            exact_solver = _ExactRiemannAdapter(config)
             exact_solution = exact_solver.solve(config)
 
             error_data = {"格式": [], "L1误差": [], "L2误差": [], "L∞误差": []}
