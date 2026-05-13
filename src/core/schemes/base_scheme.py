@@ -5,7 +5,7 @@ ensuring consistent structure and interface across implementations.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional, Callable
+from typing import Dict, Optional, Callable
 
 import numpy as np
 from numpy.typing import NDArray
@@ -161,40 +161,6 @@ class BaseScheme(ABC):
         h_new, u_new = self.apply_boundary_conditions(h_new, u_new)
 
         return h_new, u_new
-
-    def evolve(
-        self,
-        config: Any,
-        progress_callback: Optional[Callable[[float, float], None]] = None,
-    ) -> Dict[float, NDArray[np.float64]]:
-        """Run full simulation using the configuration.
-
-        Args:
-            config: DamBreakConfig object with simulation parameters
-            progress_callback: Optional callback for progress reporting
-
-        Returns:
-            Dictionary mapping time values to solution arrays
-        """
-        h0, u0 = config.initial_condition()
-        dx = config.dx
-        
-        result = self.run_simulation(
-            h0=h0,
-            u0=u0,
-            cfl=config.cfl,
-            dx=dx,
-            t_end=config.t_end,
-            progress_callback=lambda p: progress_callback(p, config.t_end) if progress_callback else None,
-        )
-        
-        output = {}
-        for i, t in enumerate(result.t):
-            h = result.h[i]
-            u = result.u[i]
-            output[round(float(t), 6)] = np.vstack([h, u])
-        
-        return output
 
     def run_simulation(
         self,

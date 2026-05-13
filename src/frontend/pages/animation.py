@@ -12,6 +12,25 @@ import streamlit as st
 st.set_page_config(page_title="动画演示 | CFD-Class", page_icon="🎬", layout="wide")
 
 
+def _adapt_scheme_for_evolve(scheme, config):
+    """适配层：为scheme添加evolve方法兼容"""
+    if hasattr(scheme, 'evolve'):
+        return scheme.evolve(config)
+    
+    h0, u0 = config.initial_condition()
+    dx = config.dx
+    result = scheme.run_simulation(
+        h0=h0, u0=u0, cfl=config.cfl, dx=dx, t_end=config.t_end
+    )
+    
+    output = {}
+    for i, t in enumerate(result.t):
+        h = result.h[i]
+        u = result.u[i]
+        output[round(float(t), 6)] = np.vstack([h, u])
+    return output
+
+
 def main():
     """动画演示页面主函数"""
     st.title("🎬 时间演化动画")
@@ -67,7 +86,7 @@ def main():
                     )
 
                     selected_scheme = get_scheme(scheme)
-                    result = selected_scheme.evolve(config)
+                    result = _adapt_scheme_for_evolve(selected_scheme, config)
 
                     if result:
                         st.success("✅ 动画数据生成完成！")

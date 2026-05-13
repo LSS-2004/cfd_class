@@ -219,6 +219,25 @@ def display_scheme_info(schemes: list):
     st.table(scheme_data)
 
 
+def _adapt_scheme_for_evolve(scheme, config):
+    """适配层：为scheme添加evolve方法兼容"""
+    if hasattr(scheme, 'evolve'):
+        return scheme.evolve(config)
+    
+    h0, u0 = config.initial_condition()
+    dx = config.dx
+    result = scheme.run_simulation(
+        h0=h0, u0=u0, cfl=config.cfl, dx=dx, t_end=config.t_end
+    )
+    
+    output = {}
+    for i, t in enumerate(result.t):
+        h = result.h[i]
+        u = result.u[i]
+        output[round(float(t), 6)] = np.vstack([h, u])
+    return output
+
+
 def run_simulation(params: Dict[str, Any], schemes: list) -> Optional[Dict]:
     """运行模拟
 
@@ -260,7 +279,7 @@ def run_simulation(params: Dict[str, Any], schemes: list) -> Optional[Dict]:
                 progress_bar.progress((idx + 1) / len(schemes))
 
                 scheme = get_scheme(scheme_name)
-                result = scheme.evolve(config)
+                result = _adapt_scheme_for_evolve(scheme, config)
 
                 results[scheme_name] = result
 
