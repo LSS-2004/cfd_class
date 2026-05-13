@@ -60,7 +60,7 @@ def main():
                     config = DamBreakConfig(
                         domain_length=domain_length,
                         nx=nx,
-                        _x_dam=_x_dam,
+                        x_dam=_x_dam,
                         h_l=h_l,
                         h_r=h_r,
                         t_end=t_end,

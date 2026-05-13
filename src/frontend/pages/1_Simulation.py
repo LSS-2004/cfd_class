@@ -18,12 +18,12 @@ def load_core_modules():
     try:
         from src.core.config import DamBreakConfig
         from src.core.schemes import (
-            HLL,
-            Godunov,
-            LaxFriedrichs,
-            LaxWendroff,
-            MacCormack,
-            MUSCLHancock,
+            HLLScheme,
+            GodunovScheme,
+            LaxFriedrichsScheme,
+            LaxWendroffScheme,
+            MacCormackScheme,
+            MUSCLScheme,
         )
 
         return True
