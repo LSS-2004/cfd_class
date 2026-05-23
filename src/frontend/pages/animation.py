@@ -12,11 +12,46 @@ import streamlit as st
 st.set_page_config(page_title="动画演示 | CFD-Class", page_icon="🎬", layout="wide")
 
 
+def _adapt_scheme_for_evolve(scheme, config):
+    """适配层：为scheme添加evolve方法兼容"""
+    if hasattr(scheme, 'evolve'):
+        return scheme.evolve(config)
+    
+    h0, u0 = config.initial_condition()
+    dx = config.dx
+    result = scheme.run_simulation(
+        h0=h0, u0=u0, cfl=config.cfl, dx=dx, t_end=config.t_end
+    )
+    
+    output = {}
+    for i, t in enumerate(result.t):
+        h = result.h[i]
+        u = result.u[i]
+        output[round(float(t), 6)] = np.vstack([h, u])
+    return output
+
+
 def main():
     """动画演示页面主函数"""
     st.title("🎬 时间演化动画")
     st.markdown("查看溃坝问题的动态演化过程")
     st.divider()
+
+    # 初始化session_state
+    if 'animation_data' not in st.session_state:
+        st.session_state.animation_data = None
+    if 'animation_config' not in st.session_state:
+        st.session_state.animation_config = None
+    if 'animation_scheme' not in st.session_state:
+        st.session_state.animation_scheme = ""
+    if 'animation_nsteps' not in st.session_state:
+        st.session_state.animation_nsteps = 20
+    if 'animation_playing' not in st.session_state:
+        st.session_state.animation_playing = False
+    if 'animation_index' not in st.session_state:
+        st.session_state.animation_index = 0
+    if 'animation_speed' not in st.session_state:
+        st.session_state.animation_speed = 1.0
 
     # 参数配置
     st.sidebar.header("⚙️ 动画参数")
@@ -24,7 +59,7 @@ def main():
     with st.sidebar.expander("📐 物理参数", expanded=True):
         domain_length = st.number_input("计算域长度 [m]", 100.0, 5000.0, 1000.0, 100.0)
         nx = st.number_input("网格数量", 10, 5000, 100, 10)
-        x_dam = st.slider("大坝位置 [m]", 0.0, domain_length, domain_length / 2, 10.0)
+        _x_dam = st.slider("大坝位置 [m]", 0.0, domain_length, domain_length / 2, 10.0)
         h_l = st.number_input("左侧水深 h_l [m]", 0.001, 100.0, 10.0, 0.1)
         h_r = st.number_input("右侧水深 h_r [m]", 0.001, 100.0, 1.0, 0.1)
 
@@ -60,24 +95,41 @@ def main():
                     config = DamBreakConfig(
                         domain_length=domain_length,
                         nx=nx,
-                        x_dam=x_dam,
+                        x_dam=_x_dam,
                         h_l=h_l,
                         h_r=h_r,
                         t_end=t_end,
                     )
 
                     selected_scheme = get_scheme(scheme)
-                    result = selected_scheme.evolve(config)
+                    result = _adapt_scheme_for_evolve(selected_scheme, config)
 
                     if result:
+                        # 保存到session_state
+                        st.session_state.animation_data = result
+                        st.session_state.animation_config = config
+                        st.session_state.animation_scheme = scheme
+                        st.session_state.animation_nsteps = time_steps
+                        st.session_state.animation_index = 0
+                        st.session_state.animation_playing = False
                         st.success("✅ 动画数据生成完成！")
-                        display_animation(config.x, result, scheme, time_steps)
                     else:
                         st.error("❌ 动画生成失败")
 
                 except ImportError as e:
                     st.error(f"❌ 核心模块未实现: {e}")
                     st.info("💡 请先完成后端开发")
+
+    # 显示动画（如果有数据）
+    if st.session_state.animation_data is not None:
+        display_animation(
+            st.session_state.animation_config.x,
+            st.session_state.animation_data,
+            st.session_state.animation_scheme,
+            st.session_state.animation_nsteps
+        )
+    else:
+        st.info("👈 配置参数后点击「生成动画」")
 
     # 动画说明
     with st.expander("📖 动画说明", expanded=False):
@@ -92,7 +144,7 @@ def main():
         1. 配置物理参数
         2. 选择数值方案
         3. 点击「生成动画」
-        4. 使用滑块控制时间步
+        4. 使用播放按钮自动播放或滑块手动控制
         """)
 
 
@@ -110,22 +162,40 @@ def display_animation(x: np.ndarray, result: Dict, scheme_name: str, n_steps: in
 
     try:
         import matplotlib.pyplot as plt
+        import time
 
         time_points = sorted(result.keys())
         step_size = max(1, len(time_points) // n_steps)
         selected_times = time_points[::step_size][:n_steps]
 
-        # 时间滑块
-        selected_time = st.slider(
-            "选择时刻",
-            min_value=0.0,
-            max_value=max(time_points),
-            value=0.0,
-            step=time_points[1] - time_points[0] if len(time_points) > 1 else 0.1,
-        )
+        # 播放控制
+        col_play, col_speed, col_slider = st.columns([1, 1, 3])
+        
+        with col_play:
+            play_key = f"play_btn_{scheme_name}"
+            if st.button("▶️ 播放" if not st.session_state.animation_playing else "⏸️ 暂停", key=play_key):
+                st.session_state.animation_playing = not st.session_state.animation_playing
+        
+        with col_speed:
+            st.session_state.animation_speed = st.slider("速度", 0.5, 3.0, st.session_state.animation_speed, 0.5, label_visibility="collapsed")
+        
+        with col_slider:
+            # 如果播放中，自动更新index
+            if st.session_state.animation_playing:
+                st.session_state.animation_index = (st.session_state.animation_index + 1) % len(time_points)
+            
+            selected_time_idx = st.slider(
+                "选择时刻",
+                min_value=0,
+                max_value=len(time_points) - 1,
+                value=st.session_state.animation_index,
+                step=1,
+                label_visibility="collapsed"
+            )
+            st.session_state.animation_index = selected_time_idx
+            closest_time = time_points[selected_time_idx]
 
         # 找到最接近的时间步
-        closest_time = min(time_points, key=lambda t: abs(t - selected_time))
         closest_result = result[closest_time]
 
         col1, col2 = st.columns(2)
@@ -140,12 +210,15 @@ def display_animation(x: np.ndarray, result: Dict, scheme_name: str, n_steps: in
             ax.set_ylabel("Water Depth h (m)")
             ax.set_title(f"水深分布 (t = {closest_time:.3f}s)")
             ax.grid(True, alpha=0.3)
+            ax.set_ylim(0, max(h) * 1.2 if len(h) > 0 else 10)
             st.pyplot(fig)
 
         with col2:
             # 速度
             fig, ax = plt.subplots(figsize=(8, 5))
-            u = closest_result[1, :] / closest_result[0, :]
+            u = np.zeros_like(x)
+            mask = closest_result[0, :] > 1e-6
+            u[mask] = closest_result[1, mask] / closest_result[0, mask]
             ax.plot(x, u, "r-", linewidth=2)
             ax.set_xlabel("Position x (m)")
             ax.set_ylabel("Velocity u (m/s)")
@@ -168,6 +241,11 @@ def display_animation(x: np.ndarray, result: Dict, scheme_name: str, n_steps: in
         ax.legend()
         ax.grid(True, alpha=0.3)
         st.pyplot(fig)
+
+        # 自动播放（使用st.rerun）
+        if st.session_state.animation_playing:
+            time.sleep(0.5 / st.session_state.animation_speed)
+            st.rerun()
 
     except ImportError:
         st.error("⚠️ Matplotlib 未安装")

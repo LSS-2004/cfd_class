@@ -12,6 +12,25 @@ import streamlit as st
 st.set_page_config(page_title="报告生成 | CFD-Class", page_icon="📝", layout="wide")
 
 
+def _adapt_scheme_for_evolve(scheme, config):
+    """适配层：为scheme添加evolve方法兼容"""
+    if hasattr(scheme, 'evolve'):
+        return scheme.evolve(config)
+    
+    h0, u0 = config.initial_condition()
+    dx = config.dx
+    result = scheme.run_simulation(
+        h0=h0, u0=u0, cfl=config.cfl, dx=dx, t_end=config.t_end
+    )
+    
+    output = {}
+    for i, t in enumerate(result.t):
+        h = result.h[i]
+        u = result.u[i]
+        output[round(float(t), 6)] = np.vstack([h, u])
+    return output
+
+
 def main():
     """报告生成页面主函数"""
     st.title("📝 模拟报告生成")
@@ -64,7 +83,6 @@ def main():
         "h_r": h_r,
         "t_end": t_end,
         "cfl": cfl,
-        "schemes": selected_schemes,
     }
 
     # 参数摘要
@@ -87,7 +105,7 @@ def main():
                     results = {}
                     for scheme_name in selected_schemes:
                         scheme = get_scheme(scheme_name)
-                        result = scheme.evolve(config)
+                        result = _adapt_scheme_for_evolve(scheme, config)
                         results[scheme_name] = result
 
                     # 生成报告

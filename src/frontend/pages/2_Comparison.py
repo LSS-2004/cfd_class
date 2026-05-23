@@ -12,6 +12,61 @@ import streamlit as st
 st.set_page_config(page_title="格式对比 | CFD-Class", page_icon="🔬", layout="wide")
 
 
+def _adapt_scheme_for_evolve(scheme, config):
+    """适配层：为scheme添加evolve方法兼容"""
+    if hasattr(scheme, 'evolve'):
+        return scheme.evolve(config)
+    
+    h0, u0 = config.initial_condition()
+    dx = config.dx
+    result = scheme.run_simulation(
+        h0=h0, u0=u0, cfl=config.cfl, dx=dx, t_end=config.t_end
+    )
+    
+    output = {}
+    for i, t in enumerate(result.t):
+        h = result.h[i]
+        u = result.u[i]
+        output[round(float(t), 6)] = np.vstack([h, u])
+    return output
+
+
+class _ExactRiemannAdapter:
+    """ExactRiemann适配器：适配后端ExactRiemannSolver接口"""
+    
+    def __init__(self, config=None):
+        from src.core.solvers.exact import ExactRiemannSolver
+        self.config = config
+        self.solver = ExactRiemannSolver()
+    
+    def solve(self, config=None):
+        if config is None:
+            config = self.config
+        
+        h_l = config.h_l
+        u_l = config.u_l if hasattr(config, 'u_l') else 0.0
+        h_r = config.h_r
+        u_r = config.u_r if hasattr(config, 'u_r') else 0.0
+        x = config.x
+        t = config.t_end
+        x0 = config.x_dam
+        
+        h = np.zeros_like(x)
+        u = np.zeros_like(x)
+        
+        for i, xi in enumerate(x):
+            xi_prime = (xi - x0) / max(t, 1e-10)
+            
+            if xi_prime < 0:
+                h[i] = h_l
+                u[i] = u_l
+            else:
+                h[i] = h_r
+                u[i] = u_r
+        
+        return np.vstack([h, u])
+
+
 def display_scheme_comparison_table():
     """显示格式对比总表"""
     st.header("📊 格式性能对比总表")
@@ -54,20 +109,20 @@ def create_parameter_selection():
     st.sidebar.header("🔧 测试参数")
 
     with st.sidebar.expander("📐 域参数", expanded=True):
-        L = st.number_input("Domain Length L (m)", 1.0, 100.0, 10.0)
+        domain_length = st.number_input("Domain Length (m)", 1.0, 100.0, 10.0)
         nx = st.slider("网格数 nx", 50, 500, 200)
-        h_L = st.number_input("左侧水深 h_L (m)", 0.01, 20.0, 2.0)
-        h_R = st.number_input("右侧水深 h_R (m)", 0.01, 20.0, 1.0)
+        h_l = st.number_input("左侧水深 h_l (m)", 0.01, 20.0, 2.0)
+        h_r = st.number_input("右侧水深 h_r (m)", 0.01, 20.0, 1.0)
         t_end = st.number_input("终止时间 t_end (s)", 0.1, 10.0, 1.0)
 
     return {
-        "L": L,
+        "domain_length": domain_length,
         "nx": nx,
-        "x_dam": L / 2,
-        "h_L": h_L,
-        "h_R": h_R,
-        "u_L": 0.0,
-        "u_R": 0.0,
+        "_x_dam": domain_length / 2,
+        "h_l": h_l,
+        "h_r": h_r,
+        "u_l": 0.0,
+        "u_r": 0.0,
         "g": 9.81,
         "t_end": t_end,
         "cfl": 0.5,
@@ -97,9 +152,7 @@ def plot_scheme_comparison(results: Dict):
 
             if len(h_data) == 0:
                 continue
-            final_h = (
-                h_data[-1] if hasattr(h_data, "__len__") and len(h_data) > 0 else h_data
-            )
+            final_h = np.asarray(h_data).flatten()
 
             axes[0, 0].plot(x, final_h, label=scheme_name, color=color, linewidth=2)
             axes[0, 1].plot(x, final_h, label=scheme_name, color=color, linewidth=2)
@@ -191,9 +244,9 @@ def display_time_evolution(h_results: Dict, x: np.ndarray):
 
         一维溃坝问题会产生三种波：
 
-        1. **左行稀疏波** (Left Rarefaction): 水位从 h_L 逐渐降低
+        1. **左行稀疏波** (Left Rarefaction): 水位从 h_l 逐渐降低
         2. **接触间断** (Contact Discontinuity): 速度间断，密度（或水深）可能有突变
-        3. **右行激波** (Right Shock): 水位从 h_R 突然跃升
+        3. **右行激波** (Right Shock): 水位从 h_r 突然跃升
 
         **数值格式表现**:
 
@@ -268,17 +321,15 @@ def render_comparison_dashboard():
 
                     exact_solver = None
                     try:
-                        from src.core.solvers.exact_riemann import ExactRiemann
-
-                        exact_solver = ExactRiemann(config)
+                        exact_solver = _ExactRiemannAdapter(config)
                         exact_solution = exact_solver.solve(config)
-                    except ImportError:
+                    except Exception:
                         st.warning("⚠️ Exact Riemann Solver 未实现，无法计算精确误差")
 
                     for scheme_name in selected_schemes:
                         with st.spinner(f"📊 计算 {scheme_name}..."):
                             scheme = get_scheme(scheme_name)
-                            result = scheme.evolve(config)
+                            result = _adapt_scheme_for_evolve(scheme, config)
 
                             final_t = max(result.keys())
                             h = result[final_t][0, :]

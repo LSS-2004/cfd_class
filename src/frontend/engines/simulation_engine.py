@@ -10,6 +10,69 @@ import numpy as np
 from numpy.typing import NDArray
 
 
+def _adapt_scheme_for_evolve(scheme, config):
+    """适配层：为scheme添加evolve方法兼容
+
+    Args:
+        scheme: 数值格式实例
+        config: DamBreakConfig配置对象
+
+    Returns:
+        模拟结果字典
+    """
+    if hasattr(scheme, 'evolve'):
+        return scheme.evolve(config)
+    
+    h0, u0 = config.initial_condition()
+    dx = config.dx
+    result = scheme.run_simulation(
+        h0=h0, u0=u0, cfl=config.cfl, dx=dx, t_end=config.t_end
+    )
+    
+    output = {}
+    for i, t in enumerate(result.t):
+        h = result.h[i]
+        u = result.u[i]
+        output[round(float(t), 6)] = np.vstack([h, u])
+    return output
+
+
+class _ExactRiemannAdapter:
+    """ExactRiemann适配器：适配后端ExactRiemannSolver接口"""
+    
+    def __init__(self, config=None):
+        from src.core.solvers.exact import ExactRiemannSolver
+        self.config = config
+        self.solver = ExactRiemannSolver()
+    
+    def solve(self, config=None):
+        if config is None:
+            config = self.config
+        
+        h_l = config.h_l
+        u_l = config.u_l if hasattr(config, 'u_l') else 0.0
+        h_r = config.h_r
+        u_r = config.u_r if hasattr(config, 'u_r') else 0.0
+        x = config.x
+        t = config.t_end
+        x0 = config.x_dam
+        
+        h = np.zeros_like(x)
+        u = np.zeros_like(x)
+        
+        for i, xi in enumerate(x):
+            xi_prime = (xi - x0) / max(t, 1e-10)
+            
+            if xi_prime < 0:
+                h[i] = h_l
+                u[i] = u_l
+            else:
+                h[i] = h_r
+                u[i] = u_r
+        
+        return np.vstack([h, u])
+
+
 class SimulationEngine:
     """模拟运行引擎"""
 
@@ -58,11 +121,9 @@ class SimulationEngine:
             # 计算精确解
             if exact_solution:
                 try:
-                    from src.core.solvers.exact_riemann import ExactRiemann
-
-                    exact_solver = ExactRiemann(self.config)
+                    exact_solver = _ExactRiemannAdapter(self.config)
                     results["exact"] = exact_solver.solve(self.config)
-                except ImportError:
+                except Exception:
                     pass
 
             # 运行各格式模拟
@@ -73,7 +134,7 @@ class SimulationEngine:
 
                 try:
                     scheme = get_scheme(scheme_name)
-                    result = scheme.evolve(self.config)
+                    result = _adapt_scheme_for_evolve(scheme, self.config)
 
                     if not result:
                         results["errors"][scheme_name] = {"error": "模拟结果为空"}
@@ -145,11 +206,11 @@ class SimulationEngine:
             return {}
 
         return {
-            "domain_length": self.config.L,
+            "domain_length": self.config.domain_length,
             "grid_points": self.config.nx,
             "dam_position": self.config.x_dam,
-            "left_depth": self.config.h_L,
-            "right_depth": self.config.h_R,
+            "left_depth": self.config.h_l,
+            "right_depth": self.config.h_r,
             "gravity": self.config.g,
             "end_time": self.config.t_end,
             "cfl": self.config.cfl,

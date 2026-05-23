@@ -313,7 +313,7 @@ def render_parameter_panel(
     current_params = {
         "domain_length": domain_length,
         "nx": nx,
-        "x_dam": x_dam,
+        "_x_dam": x_dam,
         "h_l": h_l,
         "h_r": h_r,
         "u_l": u_l,
@@ -325,7 +325,6 @@ def render_parameter_panel(
         "dx": dx,
         "dt": dt,
         "n_steps": n_steps,
-        "schemes": selected_schemes,
     }
 
     # 参数验证

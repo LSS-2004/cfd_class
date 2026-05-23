@@ -36,4 +36,44 @@ __all__ = [
     "FrommScheme",
     "GodunovScheme",
     "MUSCLScheme",
+    "get_scheme",
+    "get_all_schemes",
 ]
+
+_SCHEME_REGISTRY = {
+    "Upwind": UpwindScheme,
+    "Lax-Friedrichs": LaxFriedrichsScheme,
+    "HLL": HLLScheme,
+    "Lax-Wendroff": LaxWendroffScheme,
+    "MacCormack": MacCormackScheme,
+    "Beam-Warming": BeamWarmingScheme,
+    "Fromm": FrommScheme,
+    "Godunov": GodunovScheme,
+    "MUSCL-Hancock": MUSCLScheme,
+}
+
+
+def get_scheme(name: str) -> BaseScheme:
+    """Get a scheme instance by name.
+
+    Args:
+        name: Scheme name
+
+    Returns:
+        Scheme instance
+
+    Raises:
+        ValueError: If scheme name is not recognized
+    """
+    if name not in _SCHEME_REGISTRY:
+        raise ValueError(f"Unknown scheme: {name}. Available schemes: {list(_SCHEME_REGISTRY.keys())}")
+    return _SCHEME_REGISTRY[name]()
+
+
+def get_all_schemes() -> list:
+    """Get list of all available scheme names.
+
+    Returns:
+        List of scheme names
+    """
+    return list(_SCHEME_REGISTRY.keys())
