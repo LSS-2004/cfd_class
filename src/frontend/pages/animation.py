@@ -37,6 +37,22 @@ def main():
     st.markdown("查看溃坝问题的动态演化过程")
     st.divider()
 
+    # 初始化session_state
+    if 'animation_data' not in st.session_state:
+        st.session_state.animation_data = None
+    if 'animation_config' not in st.session_state:
+        st.session_state.animation_config = None
+    if 'animation_scheme' not in st.session_state:
+        st.session_state.animation_scheme = ""
+    if 'animation_nsteps' not in st.session_state:
+        st.session_state.animation_nsteps = 20
+    if 'animation_playing' not in st.session_state:
+        st.session_state.animation_playing = False
+    if 'animation_index' not in st.session_state:
+        st.session_state.animation_index = 0
+    if 'animation_speed' not in st.session_state:
+        st.session_state.animation_speed = 1.0
+
     # 参数配置
     st.sidebar.header("⚙️ 动画参数")
 
@@ -89,14 +105,31 @@ def main():
                     result = _adapt_scheme_for_evolve(selected_scheme, config)
 
                     if result:
+                        # 保存到session_state
+                        st.session_state.animation_data = result
+                        st.session_state.animation_config = config
+                        st.session_state.animation_scheme = scheme
+                        st.session_state.animation_nsteps = time_steps
+                        st.session_state.animation_index = 0
+                        st.session_state.animation_playing = False
                         st.success("✅ 动画数据生成完成！")
-                        display_animation(config.x, result, scheme, time_steps)
                     else:
                         st.error("❌ 动画生成失败")
 
                 except ImportError as e:
                     st.error(f"❌ 核心模块未实现: {e}")
                     st.info("💡 请先完成后端开发")
+
+    # 显示动画（如果有数据）
+    if st.session_state.animation_data is not None:
+        display_animation(
+            st.session_state.animation_config.x,
+            st.session_state.animation_data,
+            st.session_state.animation_scheme,
+            st.session_state.animation_nsteps
+        )
+    else:
+        st.info("👈 配置参数后点击「生成动画」")
 
     # 动画说明
     with st.expander("📖 动画说明", expanded=False):
@@ -129,35 +162,29 @@ def display_animation(x: np.ndarray, result: Dict, scheme_name: str, n_steps: in
 
     try:
         import matplotlib.pyplot as plt
+        import time
 
         time_points = sorted(result.keys())
         step_size = max(1, len(time_points) // n_steps)
         selected_times = time_points[::step_size][:n_steps]
 
-        # 初始化session_state
-        if 'animation_playing' not in st.session_state:
-            st.session_state.animation_playing = False
-        if 'animation_index' not in st.session_state:
-            st.session_state.animation_index = 0
-        if 'animation_speed' not in st.session_state:
-            st.session_state.animation_speed = 1.0
-
         # 播放控制
         col_play, col_speed, col_slider = st.columns([1, 1, 3])
         
         with col_play:
-            if st.button("▶️ 播放" if not st.session_state.animation_playing else "⏸️ 暂停", key="play_btn"):
+            play_key = f"play_btn_{scheme_name}"
+            if st.button("▶️ 播放" if not st.session_state.animation_playing else "⏸️ 暂停", key=play_key):
                 st.session_state.animation_playing = not st.session_state.animation_playing
         
         with col_speed:
-            st.session_state.animation_speed = st.slider("速度", 0.5, 3.0, 1.0, 0.5, label_visibility="collapsed")
+            st.session_state.animation_speed = st.slider("速度", 0.5, 3.0, st.session_state.animation_speed, 0.5, label_visibility="collapsed")
         
         with col_slider:
-            # 如果播放中，自动更新slider
+            # 如果播放中，自动更新index
             if st.session_state.animation_playing:
                 st.session_state.animation_index = (st.session_state.animation_index + 1) % len(time_points)
             
-            selected_time = st.slider(
+            selected_time_idx = st.slider(
                 "选择时刻",
                 min_value=0,
                 max_value=len(time_points) - 1,
@@ -165,8 +192,8 @@ def display_animation(x: np.ndarray, result: Dict, scheme_name: str, n_steps: in
                 step=1,
                 label_visibility="collapsed"
             )
-            st.session_state.animation_index = selected_time
-            closest_time = time_points[selected_time]
+            st.session_state.animation_index = selected_time_idx
+            closest_time = time_points[selected_time_idx]
 
         # 找到最接近的时间步
         closest_result = result[closest_time]
@@ -215,9 +242,8 @@ def display_animation(x: np.ndarray, result: Dict, scheme_name: str, n_steps: in
         ax.grid(True, alpha=0.3)
         st.pyplot(fig)
 
-        # 自动刷新
+        # 自动播放（使用st.rerun）
         if st.session_state.animation_playing:
-            import time
             time.sleep(0.5 / st.session_state.animation_speed)
             st.rerun()
 
