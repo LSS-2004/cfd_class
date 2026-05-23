@@ -111,7 +111,7 @@ def main():
         1. 配置物理参数
         2. 选择数值方案
         3. 点击「生成动画」
-        4. 使用滑块控制时间步
+        4. 使用播放按钮自动播放或滑块手动控制
         """)
 
 
@@ -134,17 +134,41 @@ def display_animation(x: np.ndarray, result: Dict, scheme_name: str, n_steps: in
         step_size = max(1, len(time_points) // n_steps)
         selected_times = time_points[::step_size][:n_steps]
 
-        # 时间滑块
-        selected_time = st.slider(
-            "选择时刻",
-            min_value=0.0,
-            max_value=max(time_points),
-            value=0.0,
-            step=time_points[1] - time_points[0] if len(time_points) > 1 else 0.1,
-        )
+        # 初始化session_state
+        if 'animation_playing' not in st.session_state:
+            st.session_state.animation_playing = False
+        if 'animation_index' not in st.session_state:
+            st.session_state.animation_index = 0
+        if 'animation_speed' not in st.session_state:
+            st.session_state.animation_speed = 1.0
+
+        # 播放控制
+        col_play, col_speed, col_slider = st.columns([1, 1, 3])
+        
+        with col_play:
+            if st.button("▶️ 播放" if not st.session_state.animation_playing else "⏸️ 暂停", key="play_btn"):
+                st.session_state.animation_playing = not st.session_state.animation_playing
+        
+        with col_speed:
+            st.session_state.animation_speed = st.slider("速度", 0.5, 3.0, 1.0, 0.5, label_visibility="collapsed")
+        
+        with col_slider:
+            # 如果播放中，自动更新slider
+            if st.session_state.animation_playing:
+                st.session_state.animation_index = (st.session_state.animation_index + 1) % len(time_points)
+            
+            selected_time = st.slider(
+                "选择时刻",
+                min_value=0,
+                max_value=len(time_points) - 1,
+                value=st.session_state.animation_index,
+                step=1,
+                label_visibility="collapsed"
+            )
+            st.session_state.animation_index = selected_time
+            closest_time = time_points[selected_time]
 
         # 找到最接近的时间步
-        closest_time = min(time_points, key=lambda t: abs(t - selected_time))
         closest_result = result[closest_time]
 
         col1, col2 = st.columns(2)
@@ -159,12 +183,15 @@ def display_animation(x: np.ndarray, result: Dict, scheme_name: str, n_steps: in
             ax.set_ylabel("Water Depth h (m)")
             ax.set_title(f"水深分布 (t = {closest_time:.3f}s)")
             ax.grid(True, alpha=0.3)
+            ax.set_ylim(0, max(h) * 1.2 if len(h) > 0 else 10)
             st.pyplot(fig)
 
         with col2:
             # 速度
             fig, ax = plt.subplots(figsize=(8, 5))
-            u = closest_result[1, :] / closest_result[0, :]
+            u = np.zeros_like(x)
+            mask = closest_result[0, :] > 1e-6
+            u[mask] = closest_result[1, mask] / closest_result[0, mask]
             ax.plot(x, u, "r-", linewidth=2)
             ax.set_xlabel("Position x (m)")
             ax.set_ylabel("Velocity u (m/s)")
@@ -187,6 +214,12 @@ def display_animation(x: np.ndarray, result: Dict, scheme_name: str, n_steps: in
         ax.legend()
         ax.grid(True, alpha=0.3)
         st.pyplot(fig)
+
+        # 自动刷新
+        if st.session_state.animation_playing:
+            import time
+            time.sleep(0.5 / st.session_state.animation_speed)
+            st.rerun()
 
     except ImportError:
         st.error("⚠️ Matplotlib 未安装")
